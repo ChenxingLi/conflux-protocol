@@ -522,8 +522,8 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 	%\item {\bf gasLimit:} A scalar value $\head_{\ell}\in\N_{256}$ equal to the current limit of gas expenditure per block. 
 	%Starting from $\head_{\ell}(\gblock)\eqdef \startblockgastlimit=\startblockgastlimitline$.
 
-	\item {\bf refereeHash:} 叔引用列表的序列化 $\rlp$ 序列，由叔块的 256 比特 Keccak 哈希构成，正式表达为 $\head_o \in\Byte^*$。
-	该列表最多由 $\numberofommers$ 个叔块的哈希标识组成。
+	\item {\bf refereeHash:} 通过对引用列表进行序列化操作所得的 $\rlp$ 序列。该列表由引用区块的 256 比特 Keccak 哈希构成，正式表达为 $\head_o \in\Byte^*$。
+	该列表最多由 $\numberofommers$ 个引用区块的哈希标识组成。
 	方便起见，我们用 $\referees(\block)$ 表示区块 $\block$ 的这些引用区块。
 	%\item {\bf refereeHash:} The serialized $\rlp$ sequence of the referee list consisting of  Keccak 256-bit hashes of referee blocks, formally denoted by $\head_o \in\Byte^*$. 
 	%This list consists of up to $\numberofommers$ hash references of referee blocks.
@@ -656,7 +656,8 @@ $R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
 	L_O(\head)\equiv L_H^*(\head_o)
 \end{align*}
 
-The component types are defined thus: 
+其中各个组成部分的类型定义如下：
+%The component types are defined thus: 
 \begin{align}
 	& \head_p \in \B_{256} 
 	\qquad &\land \qquad &\head_h\in \N_{64}
@@ -678,9 +679,10 @@ The component types are defined thus:
 	\qquad &\land \qquad &\head_n\in \B_{256}
 \end{align}
 
-Now we have the specification for the construction of a formal block structure. 
-With the $\rlp$ transformation we can further serialize this structure into a sequence of bytes ready for transmission and storage. 
- 
+这样我们就已经严格定义了一个区块结构需要的所有元素。
+通过 $\rlp$ 转换，我们可以将该结构进一步序列化为一个方便网络传输和本地储存的字节序列。
+%Now we have the specification for the construction of a formal block structure. 
+%With the $\rlp$ transformation we can further serialize this structure into a sequence of bytes ready for transmission and storage. 
 
   
 \subsubsection{Well-formedness}
