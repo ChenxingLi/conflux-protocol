@@ -3,61 +3,92 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %------------------------------------------------
 
-\section{Basic Components}
-In an overview, the {\name} world-state consists of a list of accounts and the associated account states, and the global state is updated via transactions. 
-The {\name} blockchain stores all processed transactions in blocks, together with necessary information in block headers which enables a total ordering of all blocks.
-In this section we discuss the meaning of accounts, transactions and blocks in more details.
+\section{基本构成}
+概括而论，{\name} 的全局状态由其所有账户和账户的相关状态构成，而伴随着每一次交易，全局状态都会产生更新。 
+{\name} 区块链的每个区块都存储着该区块已处理的所有交易信息，而区块头内也存储着为区块排序所必要的信息。
+在本章节我们将详细讨论账户、交易和区块的定义和意义。
 
 
-\subsection{Accounts}
+\subsection{账户}
 \label{subsec:accounts}
 
-The {\name} global state is described in an account model, with the basic storage component called an \emph{account}.
-Every actor, which is either a person or an entity that is able to interact with the {\name} world, has its necessary information stored in an account $\account$  as a key/value pair $(\account_{addr}, \account_{state})$ of address and corresponding states. 
-The account address $\account_{addr}$ is a 160-bit identifier. The account state $\account_{state}= (\account_{basic},\account_{code}, \account_{storage},\account_{deposit},\account_{vote})$ consists of five components. The account basic state $\account_{state}$, the code info $\account_{code}$, the deposit list $\account_{deposit}$ and the vote list $\account_{vote}$ are four serialized sequences in an $\rlp$ structure (c.f. \cite{ETH_yellow}). The account storage $\account_{storage}$ is a set of key-value pairs which map 256-bit address to a serialized storage information in an $\rlp$ structure. 
-Furthermore we note that each account $\account$ is associated with a pair of public key and private key $\left(\account_{pubkey}, \account_{prikey}\right)$.
-The account address is the concatenation of $4$-bit type indicator and a $156$-bit digest of the associated public key: 
+{\name} 的全局状态可被描述为一个账户模型，其中的基本存储元素为一个\emph{账户}。
+系统中的每一个成员，即每一个能与 {\name} 全局互动的个人或个体，都拥有一个记录着该用户所有必要信息的账户 $\account$ 。信息通过一个以地址和状态构成的键值组合 $(\account_{addr}, \account_{state})$记录
+%。
+%原翻译：系统中的每一个成员，也即每一个能与 Conflux 互动的个人或个体，都拥有一个账户 $\account$ 以记录该用户的所有必要信息 —— 一个由地址和状态构成的键值组合 $(\account_{addr}, \account_{state})$。
+%
+账户地址 $\account_{addr}$ 是一个 160 比特的标识符。
+账户状态 $\account_{state}= (\account_{basic},\account_{code}, \account_{storage},\account_{deposit},\account_{vote})$ 由五个部分组成。
+%The account state $\account_{state}= (\account_{basic},\account_{code}, \account_{storage},\account_{deposit},\account_{vote})$ consists of five components. 
+
+账户的基本状态 $\account_{state}$， 代码信息 $\account_{code}$，锁仓列表 $\account_{deposit}$，和投票列表 $\account_{vote}$ 是四个 $\rlp$ 结构的有序序列 (比较 \cite{ETH_yellow})。
+%The account basic state $\account_{state}$, the code info $\account_{code}$, the deposit list $\account_{deposit}$ and the vote list $\account_{vote}$ are four serialized sequences in an $\rlp$ structure (c.f. \cite{ETH_yellow}). 
+账户存储 $\account_{storage}$ 是多个键值组合的集合，该组合将 $256$ 比特的地址映射到一个$\rlp$ 结构的有序存储信息。
+%The account storage $\account_{storage}$ is a set of key-value pairs which map 256-bit address to a serialized storage information in an $\rlp$ structure. 
+此外，每一个账户都有一对关联的公钥和私钥 $\left(\account_{pubkey}, \account_{prikey}\right)$。
+%Furthermore we note that each account $\account$ is associated with a pair of public key and private key $\left(\account_{pubkey}, \account_{prikey}\right)$.
+而账户地址由一个 $4$ 比特的类型标志和一个$156$ 比特的关联公钥摘要串联而成：
+%即 $\account_{addr} \eqdef \kec \left( \account_{pubkey} \right)[96\dots 255]$。
+%The account address is the concatenation of $4$-bit type indicator and a $156$-bit digest of the associated public key: 
 \begin{equation}\label{eq:account-address}
 	\account_{addr} \eqdef \mathsf{Type}_{\account} \circ \kec \left( \account_{pubkey} \right)[100\dots 255]
 \end{equation}
-where $\mathsf{Type}_{\account}\in \B_4$ is the type indicator,
-which is $\mathsf{Type}_{\account}=\typenormal$ for \emph{normal accounts} (a.k.a. \emph{non-contract accounts}), $\mathsf{Type}_{\account}=\typecontract$ for \emph{(Solidity) contracts},
-and $\mathsf{Type}_{\account}=\typereserved$ for \emph{built-in/reserved contracts} (a.k.a. \emph{``precompiled contracts''}).
+其中 $\mathsf{Type}_{\account}\in \B_4$ 即类型标志，
+%where $\mathsf{Type}_{\account}\in \B_4$ is the type indicator,
+$\mathsf{Type}_{\account}=\typenormal$ 表示 \emph{普通账户} (即 \emph{非合约账户})，
+%which is $\mathsf{Type}_{\account}=\typenormal$ for \emph{normal accounts} (a.k.a. \emph{non-contract accounts}), 
+$\mathsf{Type}_{\account}=\typecontract$ 表示 \emph{(Solidity) 合约},
+%$\mathsf{Type}_{\account}=\typecontract$ for \emph{(Solidity) contracts},
+而 $\mathsf{Type}_{\account}=\typereserved$ 表示 \emph{内置/保留合约} (即 \emph{``预编译合约''})。
+%and $\mathsf{Type}_{\account}=\typereserved$ for \emph{built-in/reserved contracts} (a.k.a. \emph{``precompiled contracts''}).
 
 
-For succinctness and convenience, and as long as there is no ambiguity, we will write $\account$ without subscript for the state of an account and let $a\eqdef \account_{addr}$ denote the corresponding address.
+出于简洁性和方便性的考虑，只要不出现歧义，我们将以不加脚标的 $\account$表示账户的状态，并用 $a\eqdef \account_{addr}$ 表示该账户的地址。
 
-\paragraph{Basic state}
 
-An account basic state $\account_{basic} \eqdef\left( \account_n, \account_b, \account_c,\account_t, \account_o, \account_r, \account_a, \account_p\right)$ consists of the following fields. 
+\paragraph{基本状态}
+
+一个账户的基本状态 $\account_{basic} \eqdef\left( \account_n, \account_b, \account_c,\account_t, \account_o, \account_r, \account_a, \account_p\right)$ 由以下域组成：
+%An account basic state $\account_{basic} \eqdef\left( \account_n, \account_b, \account_c,\account_t, \account_o, \account_r, \account_a, \account_p\right)$ consists of the following fields. 
 \begin{itemize}[nosep]
-	\item {\bf nonce:} A scalar counter recording the number of previous activities initiated by this account. Formally denoted by $\account_n\in \N_{256}$. For example, the number of transactions sent from $\account_{addr}$, or the number of contract-creations in the case this account is associated with codes.
+	\item {\bf nonce:} 一个正式表达为 $\account_n\in \N_{256}$ 的计数标量，用以记录由账户发起的历史活动数。例如，从 $\account_{addr}$ 发出的所有历史交易的数量。而对于合约账户，“nonce”（现时）表示其所创造的合约数量。
+	%\item {\bf nonce:} A scalar counter recording the number of previous activities initiated by this account. Formally denoted by $\account_n\in \N_{256}$. For example, the number of transactions sent from $\account_{addr}$, or the number of contract-creations in the case this account is associated with codes.
+	%原翻译：一个计数标量，由 $\account_n$ 表示。“nonce”（现时）记录一个账户的历史活动数量，例如历史上从 $\account_{addr}$ 发出的所有交易的数量。对于合约账户，现时表示其所创造的合约数量。
 
-	\item {\bf balance:} A scalar value equal to the number of \unit  owned by this account. Formally denoted by $\account_b\in \N_{256}$. 
+	\item {\bf balance:} 一个等于该账户所拥有的 \unit 余额的标量，正式记作 $\account_b\in \N_{256}$。
+	%\item {\bf balance:} A scalar value equal to the number of \unit  owned by this account. Formally denoted by $\account_b\in \N_{256}$. 
 
-	\item {\bf codeHash:} The hash of the \cvm code that gets executed when $\account_{addr}$ receives a message call. 
-	Unlike other fields, it is immutable once established. All such code fragments are stored in a state database for later retrieval. This hash is formally denoted by $\account_c\in \B_{256}$,
-	which satisfies $\account_c=\kec\left(\mathbf{p} \right)$ when the stored code is $\mathbf{p}$.  
+	\item {\bf codeHash:} 每当 $\account_{addr}$ 收到一个消息调用时会被执行 EVM 代码的哈希值。不同于其他域，代码哈希一旦产生就不可更改。所有的这类代码片段被储存在一个状态数据库里，以便今后调用。当所存储的代码是 $\mathbf{p}$ 时，被记为 $\account_c\in \B_{256}$ 的该哈希需满足 $\account_c=\kec\left(\mathbf{p} \right)$。  
+	%原翻译：\item {\bf codeHash:} 每当 $\account_{addr}$ 收到一个消息调用时会被执行 EVM 代码的哈希值。不同于其他域，codeHash 一旦产生就不可更改。所有的这类代码片段被储存在一个状态数据库里，以便今后调用。该哈希记作 $\account_c$，当所存储的代码是 $\mathbf{p}$ 时 $\account_c$ 需满足 $\account_c=\kec\left(\mathbf{p} \right)$
 
-	\item {\bf stakingBalance:} A scalar value equals to the number of staked \unit. Formally denoted by $\account_t\in \N_{256}$. (See section~\ref{sec:staking} for details)
-	
-	\item {\bf storageCollateral:} A scalar value equals to the number of \unit used as collateral for storage, which will be returned to balance if the corresponding storage is released. Formally denoted by $\account_o\in \N_{256}$. (See section~\ref{sec:collateral} for details)
-	
-	\item {\bf accumulatedInterestReturn:} A scalar value equals to the number of \unit in accumulated interest return. Formally denoted by $\account_r\in \N_{256}$. (See section~\ref{sec:staking} for details)
-	
-	\item {\bf admin:} The address of the administrator $\account_a\in \B_{160}$. (See section~\ref{sec:admin} for details)
-	
-	\item {\bf sponsorInfo:} The sponsor information contains five components: {\bf sponsor for gas}, {\bf sponsor for collateral}, {\bf sponsor gas limit}, {\bf sponsor balance for gas} and {\bf sponsor balance for collateral}. Formally denoted by $\account_p\in (\B_{160})^2\times (\N_{256})^3$. (See section~\ref{sec:sponsor} for details). We use $\account_p[{\sf gas}]_a$, $\account_p[{\sf col}]_a$, 
-	$\account_p[{\sf limit}]_a$, $\account_p[{\sf gas}]_b$ and $\account_p[{\sf col}]_b$ to reference these five components. 
+	\item {\bf stakingBalance:} 一个正式表达为 $\account_t\in \N_{256}$ 的标量，与用于 staking 的 \unit 数量相等。（详见第 \ref{sec:staking} 节）
+	%\item {\bf stakingBalance:} A scalar value equal to the number of staked \unit. Formally denoted by $\account_t\in \N_{256}$. (See section~\ref{sec:staking} for details)
+
+	\item {\bf storageCollateral:} 一个正式表达为 $\account_o\in \N_{256}$ 的标量，其值为存储抵押的 \unit 数量。存储被释放后，其对应的存储抵押将被归还至账户余额。（详见第 \ref{sec:collateral} 节）
+	%\item {\bf storageCollateral:} A scalar value equal to the number of \unit used as collateral for storage, which will be returned to balance if the corresponding storage is released. Formally denoted by $\account_o\in \N_{256}$. (See section~\ref{sec:collateral} for details)
+
+	\item {\bf accumulatedInterestReturn:} 一个正式表达为 $\account_r\in \N_{256}$ 的标量，其值等于累计利息收益的 \unit 数量。（详见第 \ref{sec:collateral} 节）
+	%\item {\bf accumulatedInterestReturn:} A scalar value equal to the number of \unit in accumulated interest return. Formally denoted by $\account_r\in \N_{256}$. (See section~\ref{sec:staking} for details)
+
+	\item {\bf admin:} 若账户 $\account$ 是一个合约，此项为管理员地址。其正式表达为 $\account_a\in \B_{160}$。（详见第 \ref{sec:admin} 节）
+	%\item {\bf admin:} The address of the administrator if $\account$ is a contract.  Formally denoted by $\account_a\in \B_{160}$. (See section~\ref{sec:admin} for details)
+
+	\item {\bf sponsorInfo:} 若账户 $\account$ 是一个合约，此项为资助人信息。其包含五个部分： $\account_p[{\sf gas}]_a$ 表示 {\bf 燃料资助人}, $\account_p[{\sf col}]_a$ 表示 {\bf 存储抵押资助人}, $\account_p[{\sf limit}]_a$ 表示 {\bf 燃料资助上限}, $\account_p[{\sf gas}]_b$ 表示 {\bf 燃料资助余额}, $\account_p[{\sf col}]_b$ 表示 {\bf 存储抵押资助余额}。
+	其正式表达为 $\account_p\in (\B_{160})^2\times (\N_{256})^3$ 。(详见第 \ref{sec:sponsor} 节)
+	%\item {\bf sponsorInfo:} The sponsor information if $\account$ is a contract. It contains five components: {\bf sponsor for gas}, {\bf sponsor for collateral},  {\bf sponsor gas limit}, {\bf sponsor balance for gas} and {\bf sponsor balance for collateral}. Formally denoted by $\account_p\in (\B_{160})^2\times (\N_{256})^3$. (See section~\ref{sec:sponsor} for details). We use $\account_p[{\sf gas}]_a$, $\account_p[{\sf col}]_a$, $\account_p[{\sf limit}]_a$, $\account_p[{\sf gas}]_b$ and $\account_p[{\sf col}]_b$ to reference these five components. 
 \end{itemize}
 
-\paragraph{Storage state}
+\paragraph{存储状态}
 
-An account's storage state $\account_{storage}$ (or $\account_{\bf s}$ for abbreviation) is a key/value database representing the account's storage state, if $\account$ is a contract account. 
-%
-Every storage entry is keyed by an arbitrary length bit-string $k\in \B^{*}$ and is represented as $(v,o)\in \N_{256}\times \B_{160}$, where $v$ denotes the value stored in this entry and $o$ denotes the owner who provides storage collateral for this entry. (See section~\ref{sec:collateral} for details about storage collateral.)
-
-We use $\account_{\bf s}[k]$ to represent storage entry $(v,o)$ keyed by $k$ and use $\account_{\bf s}[k]_v$ and $\account_{\bf s}[k]_o$ to denote corresponding fields. We denote by $\account_{\bf s}[k]=\varnothing$ for the case the storage state doesn't contain an entry with key $k$. 
+若一个账户为合约账户，其存储状态 $\account_{storage}$ （或缩写为 $\account_{s}$ ）由一个键值数据库代表。
+%An account's storage state $\account_{storage}$ (or as $\account_{s}$ for abbreviation)is a key/value database representing the account's storage state, if $\account$ is a contract account. 
+所有存储项以一个 $256$ 比特或 $320$ 比特的字符串 $k\in \B_{256}\cup \B_{320}$ 为键。其表达式为 $(v,o)\in \N_{256}\times \B_{160}$ 。
+此处 $v$ 表示该项存储值，而 $o$ 表示为该项提供存储抵押的所有者。(更多有关存储抵押的细节详见第 \ref{sec:collateral} 节)
+%Every storage entry is keyed by a 256-bit string or a 320-bit string $k\in \B_{256}\cup \B_{320}$ and is represented as $(v,o)\in \N_{256}\times \B_{160}$, where $v$ denotes the value stored in this entry and $o$ denotes the owner who provides storage collateral for this entry. (See section~\ref{sec:collateral} for details about storage collateral.)
+我们用 $\account_{\bf s}[k]$ 代表以 $k$ 为键的存储项 $(v,o)$ ，并用 $\account_{\bf s}[k]_v$ 和 $\account_{\bf s}[k]_o$ 代表所对应的域。
+%We use $\account_{\bf s}[k]$ to represent storage entry $(v,o)$ keyed by $k$ and use $\account_{\bf s}[k]_v$ and $\account_{\bf s}[k]_o$ to denote corresponding fields. 
+若存储状态不包含以 $k$ 为键的存储项，我们用 $\account_{\bf s}[k]=\varnothing$ 表示以上情况。
+%We denote by $\account_{\bf s}[k]=\varnothing$ for the case the storage state doesn't contain an entry with key $k$. 
 
 
 % Since we have contract address conflict exception, we no longer need these functions.
@@ -91,20 +122,34 @@ We use $\account_{\bf s}[k]$ to represent storage entry $(v,o)$ keyed by $k$ and
 
 % This function $L_S$ and the trie function $\trie$ are used in conjunction to provide a short hash digest of the {\name} world-state.
 
-\paragraph{Code information}
+\paragraph{代码信息}
 
-For a contract account $\account$, its code information $\account_{code}\eqdef (\account_{\bf p},\account_{w})$ stores the account code $\account_{\bf p}\in \Byte^*$ and the address $\account_{w}\in \B_{160}$ who paid the code storage collateral.
+对一个合约账户 $\account$ 而言，其代码部分 $\account_{code}\eqdef (\account_{\bf p},\account_{w})$ 包含账户代码 $\account_{\bf p}\in \Byte^*$ 和支付了代码存储抵押的地址 $\account_{w}\in \B_{160}$。
+%For a contract account $\account$, its code information $\account_{code}\eqdef (\account_{\bf p},\account_{w})$ stores the account code $\account_{\bf p}\in \Byte^*$ and the address $\account_{w}\in \B_{160}$ who paid the code storage collateral.
 
-\paragraph{Staking vote info}
+\paragraph{ Staking 投票信息}
+%\paragraph{Staking vote info}
 
-An account's staking vote list $\account_{vote}$ (or $\account_{\bf v}$ for abbreviation) is a key/value set representing the vote staking info unlock at given block number. Each entry is keyed by a block ordering index $i\in\N_{64}$ stores the staking vote amount $s\in \N_{256}$ in $\unit$. It means that the account promises to lock at least $s\;\unit$ before block with order index $i$. See section~\ref{sec:staking} for more details.
+一个账户的 staking 投票列表 $\account_{vote}$ 或缩写为 $\account_{v}$ ）是一个键值对的集合，代表着所给区块号码解锁的投票staking信息。
+%An account's staking vote list $\account_{vote}$ (or as $\account_{v}$ for abvbreviation)is a key/value set representing the vote staking info unlock at given block number. 
+每一条的键是 $i\in\N_{64}$，以 $\unit$ 为单位存储着 staking 投票数 $s\in \N_{256}$。
+%Each entry is keyed by a block ordering index $i\in\N_{64}$ stores the staking vote amount $s\in \N_{256}$ in $\unit$. 
+它代表着，账户承诺在序号为 $i$ 的区块前至少锁定 $s\;\unit$。更多详见第 \ref{sec:staking} 节。
+%It means that the account promises to lock at least $s\;\unit$ before block with order index $i$. See section~\ref{sec:staking} for more details.
 
-\paragraph{Deposit list}
+\paragraph{锁仓列表}
+%\paragraph{Deposit list}
 
-An account's deposit list $\account_{deposit}\in (\N_{256}\times \N_{64}\times \N_{256})^*$ is a series of deposit item. Each entry is a handful of deposited tokens in a ternary tuple of its amount (in \unit), its deposit time (measured in the total number of blocks) and its accumulated interest rate. We use $\account_{deposit}[{\sf amt}],\account_{deposit}[{\sf idx}],\account_{deposit}[{\sf accIR}]$ refers the three components. See section~\ref{sec:staking} for more details.
+一个账户的锁仓列表 $\account_{deposit}\in (\N_{256}\times \N_{64}\times \N_{256})^*$ 由一系列的锁仓项组成。
+%An account's deposit list $\account_{deposit}\in (\N_{256}\times \N_{64}\times \N_{256})^*$ is a series of deposit item. 
+而每一个锁仓项包含一些锁仓代币。锁仓项是由代币数量（以 \unit 为单位），锁仓时间（以区块全部数量为衡量标准），和累计利润率构成的三元组。
+%Each entry is a handful of deposited tokens in a ternary tuple of its amount (in \unit), its deposit time (measured in the total number of blocks) and its accumulated interest rate. 
+我们使用 $\account_{deposit}[{\sf amt}],\account_{deposit}[{\sf idx}],\account_{deposit}[{\sf accIR}]$ 代表这三个组成部分。更多细节详见第 \ref{sec:staking} 节。
+%We use $\account_{deposit}[{\sf amt}],\account_{deposit}[{\sf idx}],\account_{deposit}[{\sf accIR}]$ refers the three compoments. See section~\ref{sec:staking} for more details.
 $\\$
 
-In initialization of each component, Conflux sets all the bit values, byte values and integers to zero and sets arbitrary length series to empty set, except the code hash which is set to the hash value of empty string. Each account state component is initialized as follows
+在各个部分的初始化阶段，Conflux 将所有比特值、字节值和整数值设为零，并将任意长度序列设为空集。作为例外，代码哈希将被设为空字符串的哈希值。因此，账户状态各组成部分的初始值如下
+%In initialization of each component, Conflux sets all the bit values, byte values and integers to zero and sets arbitrary length series to empty set, except the code hash which is set to the hash value of empty string. So each account state component is initialized as follows
 \begin{align}
 	\account^0_{basic} &\eqdef (0,0,\kec(\emptystring),0,0,0,0,(0,0,0,0,0)) \\
 	\account^0_{basic\_smp} &\eqdef (0,0,0,0,0) \\
@@ -116,21 +161,35 @@ In initialization of each component, Conflux sets all the bit values, byte value
 \end{align}
 
 %
-Given the {\name} world-state $\st$ and an address $a\in\B_{160}$, we denote by $\st [a]$ for the state $\account_{state}$ of the account $\account$ with address $a=\account_{addr}$, i.e. $\st [a] \eqdef \account_{state}$.
+对应于 {\name} 世界状态 $\st$ 和地址 $a\in\B_{160}$，我们用 $\st [a]$ 表示拥有地址 $a=\account_{addr}$ 的账户 $\account$ 的状态 $\account_{state}$，换言之 $\st [a] \eqdef \account_{state}$。
+%Given the {\name} world-state $\st$ and an address $a\in\B_{160}$, we denote by $\st [a]$ for the state $\account_{state}$ of the account $\account$ with address $a=\account_{addr}$, i.e. $\st [a] \eqdef \account_{state}$.
 % \left(\account_n, \account_b, \account_s, \account_c \right)$.
-We denote by $\st[a]\eqdef \varnothing$ if the account with address $a$ is never initialized. 
+我们使用 $\st[a]\eqdef \varnothing$ 来表示地址为 $a$ 的账户未被初始化过。
+%We denote by $\st[a]\eqdef \varnothing$ if the account with address $a$ is never initialized. 
 %
-For succinctness, we denote by $\st[a]_{\bf s}$ for storage component $\account_{storage}$, $\st[a]_{\bf v}$ for staking vote component $\st[a]_{vote}$ and $\st[a]_{\bf d}$ for deposit component $\st[a]_{deposit}$. 
+同时，我们以 $\st[a]_{\bf s}$ 表示存储部分 $\account_{storage}$，以 $\st[a]_{\bf v}$ 表示 staking 投票部分 $\st[a]_{vote}$。
+%Also, we denote by $\st[a]_{\bf s}$ for storage component $\account_{storage}$ and $\st[a]_{\bf v}$ for staking vote component $\st[a]_{vote}$. 
 
-The world-state $\st$ never stores the account state $\account_{state}$ equals to initialization value $\account^0$. So $\st[a]\eqdef \varnothing$ is equivalent to $\st[a]\eqdef \account^0$. For the key value structure components $\account_{\bf s}$ and $\account_{\bf v}$, we also use the notation $\varnothing$ and zero initialization value interchangeably.
+世界状态 $\st$ 从不存储等于初始值 $\account^0$ 的账户状态 $\account_{state}$。
+%The world-state $\st$ never stores the account state $\account_{state}$ equals to initialization value $\account^0$. 
+因此，$\st[a]\eqdef \varnothing$ 等同于 $\st[a]\eqdef \account^0$。
+%So $\st[a]\eqdef \varnothing$ is equivalent to $\st[a]\eqdef \account^0$. 
+对于键值结构部分 $\account_{\bf s}$ 和 $\account_{\bf v}$， 我们也无差别地使用 $\varnothing$ 的表达和零初始值。
+%For the key value structure components $\account_{\bf s}$ and $\account_{\bf v}$, we also use the notation $\varnothing$ and zero initialization value indistinguishably.
 
-\subsection{Hash Digest of World-State}
+\subsection{世界状态的哈希摘要}
+%\subsection{Hash Digest of World-State}
 
-\subsubsection{State entries}
+\subsubsection{状态项}
+%\subsubsection{State entries}
 
-Conflux encodes each component of each account in format of $(k,v)\in \B^*\times \B^*$ respectively. 
+Conflux 将各账户的各组成部分以 $(k,v)\in \B^*\times \B^*$ 格式分别编码。
+%Conflux encodes each component of each account in format of $(k,v)\in \B^*\times \B^*$ respectively. 
 
-\paragraph{Basic entry.} The basic entry stores basic components $\account_{basic}$. Specially, for a non-contract address, Conflux doesn't stores the fields only related to contract, like code hash $\account_c$, contract admin $\account_a$ and sponsor info $\account_p$. Let $\account_{basic\_smp}\eqdef (\account_n, \account_b, \account_t, \account_o, \account_r)$ denote the basic component with only the fields in a normal address. Formally
+\paragraph{基本项} 基本项包含基本组成部分 $\account_{basic}$。对于一个非合约地址，Conflux 不存储只与合约相关的域，例如代码哈希 $\account_c$，合约管理员地址 $\account_a$，和资助者信息 $\account_p$。
+%\paragraph{Basic entry.} The basic entry stores basic components $\account_{basic}$. Specially, for a non-contract address, Conflux doesn't stores the fields only related to contract, like code hash $\account_c$, contract admin $\account_a$ and sponsor info $\account_p$. 
+我们用 $\account_{basic\_smp}\eqdef (\account_n, \account_b, \account_t, \account_o, \account_r)$ 表示普通地址包含的基本组成部分。正式表达为
+%Let $\account_{basic\_smp}\eqdef (\account_n, \account_b, \account_t, \account_o, \account_r)$ denote the basic component with only the fields in a normal address. Formally
 \begin{align}
 	&k\eqdef \alpha_{addr}\\
 	&v\eqdef \left\{\begin{array}{ll}
@@ -141,7 +200,8 @@ Conflux encodes each component of each account in format of $(k,v)\in \B^*\times
 	
 	
 
-\paragraph{Storage entry.} The storage entry stores all the storages in $\account_{\bf s}$. Given account $\alpha$ with address $\alpha_{addr}$, for each storage key $s\in \B_{256}$ with $\account_{\bf s}[s]_v\neq 0$, we have 
+\paragraph{存储项} 存储项包含 $\account_{\bf s}$ 的所有存储。拥有地址 $\alpha_{addr}$ 的账户 $\alpha$ 内，对于满足 $\account_{\bf s}[s]_v\neq 0$ 的存储键 $s\in \B_{256}$，我们有
+%\paragraph{Storage entry.} The storage entry stores all the storages in $\account_{\bf s}$. Given account $\alpha$ with address $\alpha_{addr}$, for each storage key $s\in \B_{256}$ with $\account_{\bf s}[s]_v\neq 0$, we have 
 \begin{align}
 	k&\eqdef \alpha_{addr}\cdot [{\sf data}]_{\sf ch}\cdot s \\
 	v&\eqdef \left\{ \begin{array}{ll}
@@ -158,21 +218,25 @@ Conflux encodes each component of each account in format of $(k,v)\in \B^*\times
     k_5 &\eqdef \sf [total\char`_issued\char`_tokens]_{\sf ch} 
 \end{align}
 
-There are five special storage entries storing some statistic information about \name blockchain, which have no storage owner. 
+其中，有五个特殊存储项记录了关于 \name 区块链的一些统计信息。这些项没有存储所属者。
+%There are five special storage entries storing some statistic information about \name blockchain, which have no storage owner. 
 
-\paragraph{Storage root entry.} The storage root entry stores the storage layout for account $\account$. 
+\paragraph{存储根项} 存储根项记录着账户 $\account$ 的存储布局。
+%\paragraph{Storage root entry.} The storage root entry stores the storage layout for account $\account$. 
 \begin{align}
 	&k\eqdef \alpha_{addr}\cdot [{\sf data}]_{\sf ch}\\
 	&v\eqdef \emptystring
 \end{align}
 
-\paragraph{Code entry.} The code entry stores the component code info $\account_{code}$. 
+\paragraph{代码项} 代码项记录着代码信息部分。 $\account_{code}$。 
+%\paragraph{Code entry.} The code entry stores the component code info $\account_{code}$. 
 \begin{align}
 	&k\eqdef \alpha_{addr}\cdot [{\sf code}]_{\sf ch}\cdot \alpha_c  \\
 	&v\eqdef \rlp(\account_{code})
 \end{align}
 
-\paragraph{Staking vote list entry.} The staking vote list entry stores the component staking vote list $\account_{vote}$. 
+\paragraph{ Staking 投票列表项} Staking 投票列表项记录着 staking 投票列表部分 $\account_{vote}$。 
+%\paragraph{Staking vote list entry.} The staking vote list entry stores the component staking vote list $\account_{vote}$. 
 \begin{align}
 	k&\eqdef \alpha_{addr}\cdot [{\sf vote}]_{\sf ch}  \\
 	v&\eqdef \rlp(\tolist(\account'_{vote}))\\
@@ -180,118 +244,192 @@ There are five special storage entries storing some statistic information about 
 	\account'_{vote} &\eqdef \mbox{$\account_{vote}$ removing all the key $x$ with $\account_{vote}[x]=\account_{vote}[x-1]$}
 \end{align}
 
-\paragraph{Deposit list entry.} The deposit list entry stores the component deposit list $\account_{deposit}$. 
+\paragraph{锁仓列表项} 锁仓列表项记录着锁仓列表部分 $\account_{deposit}$。 
+%\paragraph{Deposit list entry.} The deposit list entry stores the component deposit list $\account_{deposit}$. 
 \begin{align}
 	&k\eqdef \alpha_{addr}\cdot [{\sf deposit}]_{\sf ch}  \\
 	&v\eqdef \rlp(\account_{deposit})
 \end{align}
 
-\subsubsection{Multi-version Merkle Patricia Trie}
+\subsubsection{多版本 Merkle 前缀树}
+%\subsubsection{Multi-version Merkle Patricia Trie}
 
-Ethereum collects all the key/value pairs into MPT (Merkle Patricia Trie) and updates it during execution of transactions. However, in a high throughput blockchain system, the MPT may be accessed in a high frequency and hence become a bottleneck of performance. Conflux maintains a \textbf{read-through write-back} cache and commits cached changes to MPT periodically. 
+以太坊将所有键值对汇集入 Merkle 前缀树，并在执行交易时更新它。
+%Ethereum collects all the key/value pairs into MPT (Merkle Patricia Trie) and updates it during execution of transactions. 
+然而，在一个高吞吐的区块链系统中， Merkle 前缀树可能被高频率地访问，并因此成为系统性能的瓶颈。
+%However, in a high throughput blockchain system, the MPT may be accessed in a high frequency and hence become a bottleneck of performance. 
+Conflux 维持一个 \textbf{read-through write-back} 缓存，并根据该缓存对 Merkle 前缀树进行周期性的更新。
+%Conflux maintains a \textbf{read-through write-back} cache and commits cached changes to MPT periodically. 
 
-Formally, at any time, Conflux maintains three key/value sets $T_0,T_1,T_2$, which are called {\bf snapshot}, {\bf intermediate set} and {\bf delta set} respectively. The later one is the cache of the former one. $T_2$ is the only one updated during transaction execution. In order to balance the keys in MPT {\bf delta set} and achieve a high performance, MPT $T_2$ has a different way in computing keys. Let 
+正式定义下，Conflux 在任意时刻都维持三个键值集合 $T_0,T_1,T_2$， 分别称作 {\bf 快照集}, {\bf 中间集} and {\bf 增量集}。
+%Formally, at any time, Conflux maintains three key/value sets $T_0,T_1,T_2$, which are called {\bf snapshot}, {\bf intermediate set} and {\bf delta set} respectively. 
+每个集合都是前一个集合的缓存。$T_2$ 是在执行交易时唯一更新的集合。
+%The later one is the cache of the former one. $T_2$ is the only one updated during transaction execution. 
+为了平衡 Merkle 前缀树 {\bf 增量集} 中的键并达到高性能表现，MPT $T_2$ 使用不同方式计算键。使
+%In order to balance the keys in MPT {\bf delta set} and achieve a high performance, MPT $T_2$ has a different way in computing keys. Let 
 %
 \begin{align}
 	&p\eqdef\kec(\trie(T_0),\trie(T_1)) \\
 	&f_{addr}(\alpha_{addr},p)\eqdef\kec(p[0..11]\cdot \alpha_{addr})[0..11]\cdot \alpha_{addr} \\ 
 	&f_{store}(s,p)\eqdef \kec(p\cdot s)[4..31]\cdot s\\
-	&\text{(The index here are applied on byte-level.)} \notag
+	&\text{(此处的序号应用在字节级别
+		%The index here are applied on byte-level.
+		)} \notag
 \end{align}
 
-The key is defined as (the symbols are inherited from the previous section)
+键被定义为（表达符号从先前的段落继承）
+%The key is defined as (the symbols are inherited from the previous section)
 \begin{itemize}[nosep]
-	\item {\bf Basic entry.} $k\eqdef f_{addr}(\alpha_{addr},p)$
-	\item {\bf Storage entry.} $k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf data}]_{\sf ch}\cdot f_{store}(s,p)$
-	\item {\bf Storage root entry.} $k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf data}]_{\sf ch}$
-	\item {\bf Code entry.} $k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf code}]_{\sf ch}\cdot \alpha_c$
-	\item {\bf Staking vote list entry.} $k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf vote}]_{\sf ch}$
-	\item {\bf Deposit entry.} $k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf deposit}]_{\sf ch}$
+	\item {\bf 基础项}
+	%\item {\bf Basic entry.} 
+	$k\eqdef f_{addr}(\alpha_{addr},p)$
+	\item {\bf 存储项} 
+	%\item {\bf Storage entry.} 
+	$k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf data}]_{\sf ch}\cdot f_{store}(s,p)$
+	\item {\bf 存储根项}
+	%\item {\bf Storage root entry.} 
+	$k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf data}]_{\sf ch}$
+	%\item {\bf Code entry.} 
+	\item {\bf 代码项} $k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf code}]_{\sf ch}\cdot \alpha_c$
+	%\item {\bf Staking vote list entry.}
+	\item {\bf Staking 投票列表项} $k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf vote}]_{\sf ch}$
+	%\item {\bf Deposit entry.}
+	\item {\bf 锁仓项} $k\eqdef f_{addr}(\alpha_{addr},p)\cdot [{\sf deposit}]_{\sf ch}$
  
 \end{itemize}
 
-\paragraph{Delta set.}
+\paragraph{增量集}
+%\paragraph{Delta set.}
 
-After a successful transaction execution, if a state entry is added, updated or removed after execution of one transaction, its newest content will be added to the delta set. Notice that the delta set only compares the state entry before and after a transaction execution. It is not aware of the intermediate steps during transaction execution. 
+若一个状态项在一笔交易执行后被添加、更新或移除，其最新的内容将被添加到增量集。
+%After a successful transaction execution, if a state entry is added, updated or removed after execution of one transaction, its newest content will be added to the delta set. 
+增量集只比较一笔交易前后的状态项，并不了解执行交易的中间步骤。
+%Notice that the delta set only compares the state entry before and after a transaction execution. It is not aware of the intermediate steps during transaction execution. 
 %
-In case of deleting a state entry, an initialization value for corresponding entry will be added to the delta set representing deletion operation. 
+删除状态项时，一个该项的初始值将被添加到增量集，代表删除操作。
+%In case of deleting a state entry, an initialization value for corresponding entry will be added to the delta set representing deletion operation. 
 
-The intermediate MPT will be merged to snapshot MPT every $\snapshotperiod$ epochs. In particular, for some integer $N$, after execution of epoch $\snapshotperiod\cdot N$, \footnote{Since Conflux defers the execution of transactions for $\deferblk$ epochs, the \emph{execution of epoch $i$} means the execution for transactions in epoch $i-\deferblk$. See block component {\bf deferredStateRoot} for details.} Conflux will merge intermediate set $T_1$ to snapshot $T_0$ before computing the state root of pivot block on epoch $\snapshotperiod\cdot N$. Each time the intermediate MPT is merged, Conflux sets current delta MPT as new intermediate set and resets delta set as emptyset. Formally,  
+每 $\snapshotperiod$ 个纪元，中间集的 Merkle 前缀树将被合并到快照集的 Merkle 前缀树。
+%The intermediate MPT will be merged to snapshot MPT every $\snapshotperiod$ epochs. 
+对于整数 $N$，在纪元 $\snapshotperiod\cdot N$ 的执行之后，
+%In particular, for some integer $N$, after execution of epoch $\snapshotperiod\cdot N$, 
+\footnote{因为 Conflux 延迟 $\deferblk$ 个纪元执行交易， \emph{第 $i$ 个纪元的执行} 意味着第 $i-\deferblk$ 个纪元所包含的交易的执行。 细节详见区块组成部分 {\bf deferredStateRoot}。}
+%\footnote{Since Conflux defers the execution of transactions for $\deferblk$ epochs, the \emph{execution of epoch $i$} means the execution for transactions in epoch $i-\deferblk$. See block component {\bf deferredStateRoot} for details.}
+且在计算第 $\snapshotperiod\cdot N$ 个纪元的枢轴区块的状态根前，Conflux 将把中间集 $T_1$ 合并至快照集 $T_0$。 
+%Conflux will merge intermediate set $T_1$ to snapshot $T_0$ before computing the state root of pivot block on epoch $\snapshotperiod\cdot N$. 
+每次中间集的 Merkle 前缀树被合并时，Conflux 设当下的增量集 Merkle 前缀树为新的中间集，并重置增量集为空集。正式定义下，
+%Each time the intermediate MPT is merged, Conflux sets current delta MPT as new intermediate set and resets delta set as emptyset. Formally,  
 \begin{align}
 	T'_0 &\equiv \mathsf{MPTMerge}(T_0,T_1) \\
 	T'_1 &\equiv T_2 \\
 	T'_2 &\equiv \varnothing
 \end{align}
 %
-where $\mathsf{MPTMerge}$ is the function updates the entries in $T_0$ which have a new version value in $T_1$. Specially, for the entries with initialization value, $T_0$ removes them.  
+其中 $\mathsf{MPTMerge}$ 代表一个更新函数，对象是 $T_0$ 集合中 所有在 $T_1$ 集合中有新版本值的项。特别地，$T_0$ 集合将移除使用初始值的项。
+%where $\mathsf{MPTMerge}$ is the function updates the entries in $T_0$ which have a new version value in $T_1$. Specially, for the entries with initialization value, $T_0$ removes them.  
 
 
-\subsubsection{State root}
+\subsubsection{状态根}
+%\subsubsection{State root}
 
-Let $\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)}_2)$ be the roots of MPT after execution of epoch $i$, then the state root of epoch $i$ should be 
+使 $\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)}_2)$ 表示在纪元 $i$ 执行后 Merkle 前缀树的根,那么纪元 $i$ 的状态根应为
+%Let $\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)}_2)$ be the roots of MPT after execution of epoch $i$, then the state root of epoch $i$ should be 
 %
 $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)}_2))).$$
 
-Notice that Conflux doesn't insert $StateRoot^{(i)}$ to the header of pivot block in epoch $i$, see the following for details. 
+需要注意的是，Conflux 不将 $StateRoot^{(i)}$ 插入至第 $i$ 纪元的枢轴块区块头中。细节详见后文。
+%Notice that Conflux doesn't insert $StateRoot^{(i)}$ to the header of pivot block in epoch $i$, see the following for details. 
 
 
-\subsection{Transactions}
+\subsection{交易}
+%\subsection{Transactions}
 \label{sec:tx}
 
-A {\name} transaction $\tx$ is a single instruction composed by an external actor with a {\name} account $\account$, and this instruction is cryptographically signed under the associated private key $\account_{prikey}$ of the sending account $\account$.
-The authentication key, i.e. the sending account's associated public key $\account_{pubkey}$, is also included in the transaction for verification.
+{\name} 的每笔交易 $\tx$ 都是一个由控制 {\name} 账户 $\account$ 的外部角色发起的单次指令。该指令需要账户 $\account$ 对应的私钥 $\account_{prikey}$ 所作的密码学签名授权。
+%A {\name} transaction $\tx$ is a single instruction composed by an external actor with a {\name} account $\account$, and this instruction is cryptographically signed under the associated private key $\account_{prikey}$ of the sending account $\account$.
+鉴权密钥，即交易发起方账户所对应的公钥 $\account_{pubkey}$，也被包含在交易中，以帮助验证交易的合法性。
+%The authentication key, i.e. the sending account's associated public key $\account_{pubkey}$, is also included in the transaction for verification.
 
-There are two types of transactions depending on the ``destinations'': 
+根据不同的“目的地”，交易分为两种：
+%There are two types of transactions depending on the ``destinations'': 
 \begin{enumerate}[nosep]
-	\item {to an account address:} these are normal transactions that may transfer value and/or result in message calls, known as \emph{action transactions};
+	\item {目的地为账户地址：} 这种是普通交易，用以支付货币及/或者调用消息，被称为\emph{行为交易}；
+	%\item {to an account address:} these are normal transactions that may transfer value and/or result in message calls, known as \emph{action transactions};
 
-	\item {to ``nowhere'':} these transactions are used to create new contracts, known as \emph{contract creation transactions} or simply \emph{creation transactions}.
+	\item {无目的地：} 这种交易用于创建新合约，被称为 \emph{合约创建交易} 或简称为 \emph{创建交易}。
+	%\item {to ``nowhere'':} these transactions are used to create new contracts, known as \emph{contract creation transactions} or simply \emph{creation transactions}.
 \end{enumerate}
-Both types of transactions share the following common fields:
+以上两种交易均包含下列域：
+%Both types of transactions share the following common fields:
 \begin{itemize} [nosep]
-	\item {\bf nonce:} A scalar value equal to the number of previously sent transactions. Formally denoted by $\tx_n \in\N_{256}$.
+	\item {\bf nonce:} 一个标量值，等于之前发起的所有交易的总数，记作 $\tx_n \in\N_{256}$。
+	%A scalar value equal to the number of previously sent transactions. Formally denoted by $\tx_n \in\N_{256}$.
 
-	\item {\bf gasPrice:} A scalar value indicating the number of \unit to be paid per unit of gas that is consumed as a result of the execution of $\tx$. Formally denoted by $\tx_p\in\N_{256}$.
+	\item {\bf gasPrice:} 一个标量值，表示执行交易 $\tx$ 时消耗每一单位燃料所需支付的 Drip 数，记作 $\tx_p\in\N_{256}$。
+	%\item {\bf gasPrice:} A scalar value indicating the number of \unit to be paid per unit of gas that is consumed as a result of the execution of $\tx$. Formally denoted by $\tx_p\in\N_{256}$.
 
-	\item {\bf gasLimit:} A scalar value indicating the \emph{total} amount of gas paid for the cost of the execution of $\tx$. This is paid up-front, before any actual computation is done, and may not be increased or refunded later. 
-	Formally denoted by $\tx_g\in\N_{256}$.
-	It is the transaction sender's responsibility to avoid any extravagance caused by an unnecessarily high {\bf gasLimit}.
+	\item {\bf gasLimit:} 
+	一个标量值，记作 $\tx_g\in\N_{256}$，表示交易发送方愿意为执行交易 $\tx$ 所花费的燃料\emph{总量}。该笔金额将在最开始支付完成，先于其他所有计算之前，并不允许后续追加或退款。交易的发送方负责保证交易的 gasLimit 不会过高，以避免不必要的燃料浪费。
+	%\item {\bf gasLimit:} A scalar value indicating the \emph{total} amount of gas paid for the cost of the execution of $\tx$. This is paid up-front, before any actual computation is done, and may not be increased or refunded later. 
+	%Formally denoted by $\tx_g\in\N_{256}$.
+	%It is the transaction sender's responsibility to avoid any extravagance caused by an unnecessarily high {\bf gasLimit}.
 
 	\item {\bf action:} 
-	A variable size field indicating the action of this transaction, formally denoted by $\tx_a$. 
-	There is a sub-field {\bf create} indicating whether $\tx$ is a contract creation transaction, which we make it implicit for notation convenience. 
-	Thus, for action transactions $\tx_a$ indicates the $160$-bit address of the recipient, which refers to either a normal account or a contract account;
-	otherwise in case of a creation transaction, the recipient is indeed the newly created contract and we interpret $\tx_a$ as the only element in $\B_0$ and write $\tx_a = \emptystring$.
+	一个变量大小域，表示此交易接收方所触发的行动，正式记作 $\tx_a$。
+	%A variable size field indicating the action of this transaction, formally denoted by $\tx_a$. 
+	此参数内含一个子域 {\bf create}，用以标记 $\tx$ 是否为一个创建交易。为了表达的简洁性，我们会使数值暗含该信息。
+	%There is a sub-field {\bf create} indicating whether $\tx$ is a contract creation transaction, which we make it implicit for notation convenience. 
+	因此，$\tx_a$ 表示接收方的 $160$ 比特地址信息,代表着普通账户或合约账户； 
+	%Thus, for action transactions $\tx_a$ indicates the $160$-bit address of the recipient, which refers to either a normal account or a contract account;
+	或当交易是一笔创建交易，则接收方为新创建的合同，且将 $\tx_a$ 认作 $\B_0$ 中的唯一元素，即 $\tx_a = \emptystring$。
+	%otherwise in case of a creation transaction, the recipient is indeed the newly created contract and we interpret $\tx_a$ as the only element in $\B_0$ and write $\tx_a = \emptystring$.
 
-	\item {\bf value:} A scalar value equal to the amount of \unit that the transactions sender wants to transfer to the recipient, i.e. the account specified in $\tx_a$ or the newly created contract.
-	Formally denoted by $\tx_v\in\N_{256}$.
+	\item {\bf value:} 一个标量值，等于在交易中发送方意图转给接收方（ $\tx_t$ 所表示的账户或一个新创建的合约）的金额的 Drip 数，记作  $\tx_v\in\N_{256}$。
+	%\item {\bf value:} A scalar value equal to the amount of \unit that the transactions sender wants to transfer to the recipient, i.e. the account specified in $\tx_a$ or the newly created contract.Formally denoted by $\tx_v\in\N_{256}$.
 
 
-	\item \newversion{{\bf storageLimit:} A scalar value indicating the maximum increment of storage used in the execution of $\tx$, measured in bytes. Formally denoted by $\tx_{\ell}\in\N_{64}$.}
+	\item \newversion{{\bf storageLimit:} 
+	一个以字节为单位的标量值，表示 $\tx$ 执行所用的最大存储增量。
+	正式记作 $\tx_{\ell}\in\N_{64}$.}
+	%A scalar value indicating the maximum increment of storage used in the execution of $\tx$, measured in bytes. Formally denoted by $\tx_{\ell}\in\N_{64}$.}
 
-	\item \newversion{{\bf epochHeight:} A scalar value specifying the range of epochs where $\tx$ can be executed. Formally denoted by $\tx_e\in\N_{64}$ such that $\tx$ can only be executed between the epochs of $[\tx_e - \txepochbound, \tx_e + \txepochbound]$. }
+	\item \newversion{{\bf epochHeight:} 
+	一个标量值，标明 $\tx$ 可被执行的纪元区间。正式记作 $\tx_e\in\N_{64}$，表示 $\tx$ 只可在 $[\tx_e - \txepochbound, \tx_e + \txepochbound]$ 区间内的纪元被执行。}
+	%A scalar value specifying the range of epochs where $\tx$ can be executed. Formally denoted by $\tx_e\in\N_{64}$ such that $\tx$ can only be executed between the epochs of $[\tx_e - \txepochbound, \tx_e + \txepochbound]$. }
 
-	\item \newversion{{\bf chainID:} A binary chain id indicating where $\tx$ is intended to be executed. Formally denoted by $\tx_c\in\N_{32}$ and the chain id of {\name} is a constant $\tx_c=503$.} 
+	\item \newversion{{\bf chainID:} 
+	一个链 ID 值，表示 $\tx$ 想被执行的链 ID。正式记作 $\tx_c\in\N_{32}$，且 {\name} 的链特征是一个常数 $\tx_c=503$。
+	%A binary chain id indicating where $\tx$ is intended to be executed. Formally denoted by $\tx_c\in\N_{32}$ and the chain id of {\name} is a constant $\tx_c=503$.} 
 
-	\item {\bf v, r, s:} Corresponding fields of the recoverable ECDSA signature of $\tx$, formally denoted by $\tx_w$, $\tx_r$ and $\tx_s$. 
+	\item {\bf v, r, s:} 
+	$\tx$ 的 ECDSA 签名中相应的域，正式写为 $\tx_w$, $\tx_r$ 和 $\tx_s$。 
+	%Corresponding fields of the recoverable ECDSA signature of $\tx$, formally denoted by $\tx_w$, $\tx_r$ and $\tx_s$. 
 \end{itemize}
 
 \smallskip
-In additional to the shared fields, 
-a transaction may contain either of the following fields of unlimited length byte arrays for contract creation and invocation:
+除以上两种类型交易的共有域之外，一笔交易可能包含以下布线长度的字节序列域之一，用以创建和调用合约：
+%In additional to the shared fields, 
+%a transaction may contain either of the following fields of unlimited length byte arrays for contract creation and invocation:
 \begin{itemize}[nosep]
- 	\item {\bf init:} A byte array specifying the \cvm code for the initialization procedure, formally denoted by $\tx_{\bf i} \in \Byte^*$.
- 	Note that {\bf init} is executed once and discarded thereafter, and it returns another code fragment {\bf body} as the actual contract code that will be executed each time the contract account receives a message call (either through a transaction or due to the internal execution of code).
+ 	\item {\bf init:} 
+ 	一个不限制大小的字节数组，用来指定账户初始化程序的 EVM 代码，正式记作 $\tx_{\bf i} \in \Byte^*$ 。
+ 	%A byte array specifying the \cvm code for the initialization procedure, formally denoted by $\tx_{\bf i} \in \Byte^*$.
+ 	{\bf init} 仅在合约创建时被执行一次，随后即被遗弃。
+ 	执行这段代码将返回另一代码片段 {\bf body}，这是合约账户每次收到消息调用时都会执行的实际合约代码（可以由交易或内部代码执行触发）。 
+ 	%Note that {\bf init} is executed once and discarded thereafter, and it returns another code fragment {\bf body} as the actual contract code that will be executed each time the contract account receives a message call (either through a transaction or due to the internal execution of code).
 
 
- 	\item {\bf data:} A byte array specifying the input data of the message call to an existing contract, formally denoted by $\tx_{\bf d}\in \Byte^*$.
+ 	\item {\bf data:} 一个字节序列，表示对一个已存在的合约执行消息调用时的输入数据，正式写作 $\tx_{\bf d}\in \Byte^*$。
+ 	%\item {\bf data:} A byte array specifying the input data of the message call to an existing contract, formally denoted by $\tx_{\bf d}\in \Byte^*$.
 
  \end{itemize} 
 
-There is a function $\sender{\cdot}$ that maps a transaction to its sender using the recoverable ECDSA signature,
-i.e. $\sender{\tx}$ henceforth represents the sender of the transaction $\tx$.
-% 
-For convenience, we further introduce the function $L_{\tx}$ that parses a transaction $\tx$ as follows:
+函数 $\sender{\cdot}$ 通过可恢复 ECDSA 签名将每一笔交易与其发送方一一对应，即 $\sender{\tx}$ 代表交易 $\tx$ 的发送方。
+%There is a function $\sender{\cdot}$ that maps a transaction to its sender using the recoverable ECDSA signature,
+%i.e. $\sender{\tx}$ henceforth represents the sender of the transaction $\tx$.
+%
+方便起见，我们进一步定义函数 $L_{\tx}$ 对交易 $\tx$ 进行以下解析：
+%For convenience, we further introduce the function $L_{\tx}$ that parses a transaction $\tx$ as follows:
 \begin{align}\label{def:tx_prepare}
 	L_{\tx}(\tx)\eqdef 
 	\begin{cases}
@@ -300,160 +438,220 @@ For convenience, we further introduce the function $L_{\tx}$ that parses a trans
 	\end{cases}
 \end{align}
 
-\subsection{Blocks}
+\subsection{区块}
+%\subsection{Blocks}
 \label{sec:block}
 
-The {\name} blockchain organizes all on-chain information in blocks.
+{\name} 区块链的链上信息都被整理放置在各个区块之中。
+%The {\name} blockchain organizes all on-chain information in blocks.
 %
-Every {\name} block $\block$ consists of two parts: a block header $\head$ and a list of transactions $\txs$. The header $\head$ contains a list of other unreferenced block headers (a.k.a. \emph{referee} blocks or simply \emph{referees}).
-
-The block header $\head$ is a collection of relevant pieces of information:
+每个 {\name} 区块都由两个部分组成：一个区块头 $\head$ 和一个交易列表 $\txs$。
+%Every {\name} block $\block$ consists of two parts: a block header $\head$ and a list of transactions $\txs$. 
+区块头 $\head$ 包含一个名单，记录着其他未被引用的区块头（即 \emph{引用区块}）。
+%The header $\head$ contains a list of other unreferenced block headers (a.k.a. \emph{referee} blocks or simply \emph{referees}).
+区块头 $\head$ 是以下信息的集合：
+%The block header $\head$ is a collection of relevant pieces of information:
 \begin{itemize}[nosep]
-	\item {\bf parentHash:} The Keccak 256-bit hash of the parent block's header, formally denoted by $\head_p\in\B_{256}$.
+	\item {\bf parentHash:} 父块的区块头的 256 比特 Keccak 哈希，记为
+	$\head_p\in\B_{256}$。
+	%\item {\bf parentHash:} The Keccak 256-bit hash of the parent block's header, formally denoted by $\head_p\in\B_{256}$.
 	
-	\item {\bf height:} A scalar value equal to the height of the block, which is also the number of parent references to reach the genesis block. 
-	This is formally denoted by $\head_h\in \N_{64}$.
-	The genesis block has a height of zero. 
+	\item {\bf height:} 一个表示当前区块高度的标量值，也即从该区块到创世块所需经过的父引用关系数。正式表达为 $\head_h\in \N_{64}$。其中，创世块的高度为 $0$。
+	%\item {\bf height:} A scalar value equal to the height of the block, which is also the number of parent references to reach the genesis block. This is formally denoted by $\head_h\in \N_{64}$. The genesis block has a height of zero. 
 	
-	\item {\bf timestamp:} A scalar value equal to the reasonable output of Unix's time() at this block's inception. Formally denoted by $\head_s \in \N_{64}$. 
+	\item {\bf timestamp:} 一个标量值，等于该区块创立时 Unix 时间戳。正式表达为 $\head_s \in \N_{64}$。
+	%A scalar value equal to the reasonable output of Unix's time() at this block's inception. Formally denoted by $\head_s \in \N_{64}$.
+	%\item {\bf timestamp:} A scalar value equal to the reasonable output of Unix's time() at this block's inception. Formally denoted by $\head_s \in \N_{64}$. 
 
-	\item {\bf author:} The 160-bit address of the author of this block, formally denoted by $\head_a \in \B_{160}$. 
-	This is indeed the beneficiary's address to receive all rewards caused by successfully mining this block.
+	\item {\bf author:} 该区块挖掘者的 $160$ 比特地址，正式记作 $\head_a \in \B_{160}$。这是受益人地址，用于接收所有因成功挖掘该区块而获得的奖励。
+	%\item {\bf author:} The 160-bit address of the author of this block, formally denoted by $\head_a \in \B_{160}$. 
+	%This is indeed the beneficiary's address to receive all rewards caused by successfully mining this block.
 
-	\item {\bf transactionRoot:} The Keccak 256-bit hash of the root node of the trie structure populated with each transaction in the transaction list portion of the block, formally $\head_t\in\B_{256}$.
+	\item {\bf transactionRoot:} 一个 trie 结构的 256 比特 Keccak 哈希根，该 trie 结构由区块交易列表中包含的每一笔交易而构造， 记为 $\head_t\in\B_{256}$。
+	%\item {\bf transactionRoot:} The Keccak 256-bit hash of the root node of the trie structure populated with each transaction in the transaction list portion of the block, formally $\head_t\in\B_{256}$.
 
-
-
-	\item {\bf deferredStateRoot:} The Keccak 256-bit hash commitment of the state after all ``stable transactions''  are executed and finalized, formally $\head_r\in\B_{256}$.
-	Note that due to \emph{deferred execution} in {\name},  ``stable transactions'' are those included in the past blocks of the pivot block of \deferblk epochs ago, i.e. \deferblk steps along the parent references.
+	\item {\bf deferredStateRoot:} 在所有“稳定交易”被执行且确定后所得状态的 256 比特 Keccak 哈希委托，正式记作 $\head_r\in\B_{256}$。
+	%\item {\bf deferredStateRoot:} The Keccak 256-bit hash commitment of the state after all ``stable transactions''  are executed and finalized, formally $\head_r\in\B_{256}$.
+	需注意的是，因为 {\name} 的 \emph{延迟执行} 规则，“稳定交易”指包含该交易的区块先于 \deferblk 个纪元前的枢轴块，即沿父引用关系向上追溯 \deferblk 次。
+	%Note that due to \emph{deferred execution} in {\name},  ``stable transactions'' are those included in the past blocks of the pivot block of \deferblk epochs ago, i.e. \deferblk steps along the parent references.
 	\begin{itemize}
-		\item If the {\bf blame} field is zero, i.e. $\head_m=0$, then $\head_r$ is the root node of the state trie after all ``stable transactions''  are executed and finalized.
+		\item 如果 {\bf blame} 的域值为零，即 $\head_m=0$，那么 $\head_r$ 是所有“稳定交易”被执行且确定后所得状态树的根。
+		%\item If the {\bf blame} field is zero, i.e. $\head_m=0$, then $\head_r$ is the root node of the state trie after all ``stable transactions''  are executed and finalized.
 	
-		\item Otherwise if $\head_m>0$, then $\head_r$ will be the Keccak 256-bit hash of the vector consisting of the state root in the previous case and the corrected state roots of $\block$'s ancestors until (not including) the first ancestor that is not blamed.
+		\item 否则，若 $\head_m>0$，$\head_r$ 将是一个向量的 256 比特 Keccak 哈希。该向量的组成部分是 满足前一情况的状态根，和所有 $\block$ 的祖先区块中 {\bf blame} 域值非零的校正后状态根。
+		%\item Otherwise if $\head_m>0$, then $\head_r$ will be the Keccak 256-bit hash of the vector consisting of the state root in the previous case and the corrected state roots of $\block$'s ancestors until (not including) the first ancestor that is not blamed.
 	\end{itemize}
 	
 	
-
-	\item {\bf deferredReceiptsRoot:} The Keccak 256-bit hash commitment of the receipts of each transaction executed when updating the {\bf deferredStateRoot} field of the block, formally $\head_e\in\B_{256}$. 
+	\item {\bf deferredReceiptsRoot:} 当区块 {\bf deferredStateRoot} 域更新时产生的每一笔交易收据的256 比特 Keccak 哈希承诺，正式记作 $\head_e\in\B_{256}$。
+	%\item {\bf deferredReceiptsRoot:} The Keccak 256-bit hash commitment of the receipts of each transaction executed when updating the {\bf deferredStateRoot} field of the block, formally $\head_e\in\B_{256}$. 
 	\begin{itemize}
-		\item If the {\bf blame} field is nonzero, i.e. $\head_m=0$, then $\head_e$ is the Keccak 256-bit hash of the root node of the trie structure populated with the receipts of transactions in the epoch that is just executed.
+		\item 若 {\bf blame} 域为非零，即 $\head_m=0$，$\head_e$ 是一个trie 结构的 256 比特 Keccak 哈希根，由当下纪元的所有交易收据共同构造。
+		%\item If the {\bf blame} field is nonzero, i.e. $\head_m=0$, then $\head_e$ is the Keccak 256-bit hash of the root node of the trie structure populated with the receipts of transactions in the epoch that is just executed.
 		
-		\item Otherwise if $\head_m>0$, then $\head_e$ will be the Keccak 256-bit hash of the vector consisting of the receipt root in the previous case and the corrected receipt roots of $\block$'s ancestors until (not including) the first ancestor that is not blamed.
+		\item 否则，若 $\head_m>0$，$\head_e$ 将是一个向量的 256 比特 Keccak 哈希。该向量的组成部分是 满足前一情况的收据根，和所有 $\block$ 的祖先区块中 {\bf blame} 域值非零的校正后收据根。
+		%\item Otherwise if $\head_m>0$, then $\head_e$ will be the Keccak 256-bit hash of the vector consisting of the receipt root in the previous case and the corrected receipt roots of $\block$'s ancestors until (not including) the first ancestor that is not blamed.
 	\end{itemize}
 	
-	 
-
-
-	\item {\bf deferredLogsBloomHash:} The Keccak 256-bit hash commitment of the Bloom filter composed from indexable information (logger address and log topics) contained in each log entry from the receipts of all transactions executed when updating the {\bf deferredStateRoot} field, formally $\head_b\in\B_{256}$.
+	
+	\item {\bf deferredLogsBloomHash:} 一个关于 {\bf deferredStateRoot} 域值更新所产生的所有交易收据的日志地址和日志标题等可索引信息的布隆过滤器（Bloom filter）的256 比特 Keccak 哈希承诺，记为 $\head_b$。	
+	%\item {\bf deferredLogsBloomHash:} The Keccak 256-bit hash commitment of the Bloom filter composed from indexable information (logger address and log topics) contained in each log entry from the receipts of all transactions executed when updating the {\bf deferredStateRoot} field, formally $\head_b\in\B_{256}$.
 	\begin{itemize}
+		\item 若 {\bf blame} 域为非零，即 $\head_m=0$，$\head_b$ 是一个布隆过滤器的 256 比特 Keccak 哈希承诺，由当下纪元的所有交易收据共同构造。
 		\item If the {\bf blame} field is zero, i.e. $\head_m=0$, then $\head_b$ is the Keccak 256-bit hash commitment of the Bloom filter composed from receipts of transactions in the epoch that is just executed.
 	
-		\item Otherwise if $\head_m>0$, then $\head_b$ will be the Keccak 256-bit hash of the vector consisting of the Bloom filter commitment in the previous case and the corrected Bloom filter commitments of $\block$'s ancestors until (not including) the first ancestor that is not blamed.
+		\item 否则，若 $\head_m>0$，$\head_b$ 将是一个向量的 256 比特 Keccak 哈希。该向量的组成部分是 满足前一情况的布隆过滤器承诺，和所有 $\block$ 的祖先区块中 {\bf blame} 域值非零的校正后布隆过滤器承诺。
+		%\item Otherwise if $\head_m>0$, then $\head_b$ will be the Keccak 256-bit hash of the vector consisting of the Bloom filter commitment in the previous case and the corrected Bloom filter commitments of $\block$'s ancestors until (not including) the first ancestor that is not blamed.
 	\end{itemize}
 
-	\item {\bf blame:} A scalar value $\head_{m}\in\N_{32}$ indicating the number of immediate ancestors whose header is incorrect in the execution state fields: {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, or {\bf blame}. 
-	This {\bf blame} field is relevant in reward distribution.\\
-	For example, if $\parent{\block}$ is correct on all the four fields then $\head_{m}=0$; if any of these fields is wrong in $\parent{\block}$, then $\head_{m} \ge 1$.
+	\item {\bf blame:} 一个标量值 $\head_{m}\in\N_{32}$，表示所在枢轴链中
+	区块头执行状态域 {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, 或 {\bf blame} 有误的区块个数。
+	此域值（{\bf blame}）与奖励分配相关。
+	例如，若 $\parent{\block}$ 在以上四个执行状态域都无误，则 $\head_{m}=0$；若 $\parent{\block}$ 在以上四个执行状态域的任意域有误，则 $\head_{m} \ge 1$。
+	%\item {\bf blame:} A scalar value $\head_{m}\in\N_{32}$ indicating the number of immediate ancestors whose header is incorrect in the execution state fields: {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, or {\bf blame}. 
+	%This {\bf blame} field is relevant in reward distribution.\\
+	%For example, if $\parent{\block}$ is correct on all the four fields then $\head_{m}=0$; if any of these fields is wrong in $\parent{\block}$, then $\head_{m} \ge 1$.
 
+	\item {\bf difficulty:} 一个表示当前区块的目标难度等级的标量值 $\head_d\in\N_{256}$，通过之前区块的难度等级和时间戳计算得到。
+	%\item {\bf difficulty:} A scalar value $\head_d\in\N_{256}$ specifying the target difficulty level of this block. This is calculated from the previous block's difficulty level and the timestamp.
 
-	\item {\bf difficulty:} A scalar value $\head_d\in\N_{256}$ specifying the target difficulty level of this block. This is calculated from the previous block's difficulty level and the timestamp.
+	\item {\bf adaptiveWeight:} 布林值 $\head_w\in\B$ 表示自适应权重是否被触发。
+	%\item {\bf adaptiveWeight:} The Boolean value $\head_w\in\B$ indicating whether adaptive weight is triggered.
 
+	\item {\bf gasLimit:} 一个表示当下每个区块燃料消耗上限的标量值。该值始于 $\head_{\ell}\in\N_{256}$。$\head_{\ell}(\gblock)\eqdef \startblockgastlimit=\startblockgastlimitline$。
+	%\item {\bf gasLimit:} A scalar value $\head_{\ell}\in\N_{256}$ equal to the current limit of gas expenditure per block. 
+	%Starting from $\head_{\ell}(\gblock)\eqdef \startblockgastlimit=\startblockgastlimitline$.
 
-	\item {\bf adaptiveWeight:} The Boolean value $\head_w\in\B$ indicating whether adaptive weight is triggered.
-
-	\item {\bf gasLimit:} A scalar value $\head_{\ell}\in\N_{256}$ equal to the current limit of gas expenditure per block. 
-	Starting from $\head_{\ell}(\gblock)\eqdef \startblockgastlimit=\startblockgastlimitline$.
-
-	\item {\bf refereeHash:} The serialized $\rlp$ sequence of the referee list consisting of  Keccak 256-bit hashes of referee blocks, formally denoted by $\head_o \in\Byte^*$. 
-	This list consists of up to $\numberofommers$ hash references of referee blocks.
-	For convenience, we let $\referees(\block)$ denote these referee blocks of a block $\block$.
+	\item {\bf refereeHash:} 叔引用列表的序列化 $\rlp$ 序列，由叔块的 256 比特 Keccak 哈希构成，正式表达为 $\head_o \in\Byte^*$。
+	该列表最多由 $\numberofommers$ 个叔块的哈希标识组成。
+	方便起见，我们用 $\referees(\block)$ 表示区块 $\block$ 的这些引用区块。
+	%\item {\bf refereeHash:} The serialized $\rlp$ sequence of the referee list consisting of  Keccak 256-bit hashes of referee blocks, formally denoted by $\head_o \in\Byte^*$. 
+	%This list consists of up to $\numberofommers$ hash references of referee blocks.
+	%For convenience, we let $\referees(\block)$ denote these referee blocks of a block $\block$.
 	
-	\item {\bf customData:} A customized field with an arbitrary length list of byte string $\head_c\in (\Byte^*)^*$. 
+	\item {\bf customData:} 一个定制域，包含一个任意长度的字节串列表 $\head_c\in (\Byte^*)^*$。
+	%\item {\bf customData:} A customized field with an arbitrary length list of byte string $\head_c\in (\Byte^*)^*$. 
 
 	% {The following corresponds to the PoW part:}
-	\item {\bf mixHash:} A $256$-bit hash which, combined with the {\bf nonce}, proves that a sufficient amount of computation has been carried out on this block; formally $\head_x\in\B_{256}$. 
+	\item {\bf mixHash:} 一个 256 比特哈希，用以与 {\bf nonce} 共同证明当前区块已有足够计算量背书；正式表达为 $\head_x\in\B_{256}$。
+	%\item {\bf mixHash:} A $256$-bit hash which, combined with the {\bf nonce}, proves that a sufficient amount of computation has been carried out on this block; formally $\head_x\in\B_{256}$. 
 
-	\item {\bf nonce:} A $256$-bit value which
-	proves that a sufficient amount of computation has been carried out on this block, formally $\head_n\in\B_{256}$.
+	\item {\bf nonce:} 一个 256 比特的值，用于证明当前区块已有足够计算量背书，表示为 $\head_n\in\B_{256}$。
+	%\item {\bf nonce:} A $256$-bit value which proves that a sufficient amount of computation has been carried out on this block, formally $\head_n\in\B_{256}$.
 
 
 \end{itemize}
 
-Formally, a block header is defined as 
+正式地，一个区块头的定义是
+%Formally, a block header is defined as 
 %
 \begin{align}
 	\head = (\head_p,\head_h,\head_s,\head_s,\head_a,\head_t,\head_r,\head_e,\head_b,\head_m,\head_d,\head_w,\head_\ell,\head_o,\head_c,\head_n)
 \end{align}
 
-Notice that the {\bf mixHash} is not a part of block header in Oceanus. 
-	
-The other part of $\block$ is simply a list of transactions. Therefore the block $\block$ can be represented as follows:
+需要注意的是，在 Oceanus 版本中 {\bf mixHash} 不属于区块头的一部分。
+%Notice that the {\bf mixHash} is not a part of block header in Oceanus. 
+
+$\block$ 的另一部分是一个交易列表。因此区块 $\block$ 可使用以下表示：  
+%The other part of $\block$ is simply a list of transactions. Therefore the block $\block$ can be represented as follows:
 \begin{align}
 	\block\equiv \left(\block_\head, \block_\txs \right)
 \end{align}
 
 % \note{We notice that in many situations it is more convenient to have a list of all blocks in an epoch (under the pivot block's view) rather than a list of {\bf directly referenced blocks}. It is under discussion whether $\head_o$ should be a list of all other blocks in the epoch, i.e. $\epoch(\block)-\block \eqdef  \past(\block) - \past(\parent{\block})- \parent{\block}$ including those blocks indirectly referenced by direct referred blocks of $\block$, so that it is clear from $\block$ itself what its epoch looks like.
 
-\subsubsection{Transaction Receipt}
+\subsubsection{交易收据}
+%\subsubsection{Transaction Receipt}
 
-For convenience and easy verification of the outcome of transaction execution, 
-we introduce \emph{transaction receipt} to record certain information of every executed transaction.
-When updating the {\bf deferredStateRoot} $\head_r$ of a block,
-we encode a receipt $\block_{\rec}[i]$ for the $i$-th executed transaction
-and store these receipts in an index-keyed trie.
-This root is recorded in the header as $\head_e\in\B_{256}$.
+为了方便快速地验证交易结果，我们在每笔交易执行过程中记录下一些特定的信息并编码为 \emph{“交易收据”}。
+%For convenience and easy verification of the outcome of transaction execution, we introduce \emph{transaction receipt} to record certain information of every executed transaction.
+每当更新一个区块的 {\bf stateRoot} $\head_r$ 时，
+我们以 $\block_{\rec}[i]$ 表示第 i 笔交易的收据，将所有收据储存在一个以索引为键的 trie 树里。
+此树根的哈希值 $\head_e\in\B_{256}$ 被存储在区块头中。
+%When updating the {\bf deferredStateRoot} $\head_r$ of a block,
+%we encode a receipt $\block_{\rec}[i]$ for the $i$-th executed transaction and store these receipts in an index-keyed trie.
+%This root is recorded in the header as $\head_e\in\B_{256}$.
 
-
-For every executed transaction $\tx$, the receipt $R\eqdef \left(R_u, R_f, R_g, R_b, R_{\bf l}, R_z,R_{\bf o},R_s,R_{\bf i}\right)$ is a tuple consisting of six fields:
+每一笔已执行的交易 $\tx$ 的收据都是一个九元组 $R\eqdef \left(R_u, R_f, R_g, R_b, R_{\bf l}, R_z,R_{\bf o},R_s,R_{\bf i}\right)$ ：
+%For every executed transaction $\tx$, the receipt $R\eqdef \left(R_u, R_f, R_g, R_b, R_{\bf l}, R_z,R_{\bf o},R_s,R_{\bf i}\right)$ is a tuple consisting of six fields:
 \begin{itemize}[nosep]
-	\item $R_u\in\N_{256}$ is the cumulative gas used \emph{in the epoch where $\tx$ is executed} as of immediately after $\tx$ has been processed;
+	\item $R_u\in\N_{256}$ 为 \emph{包含交易 $\tx$ 收据的纪元} 中当该笔交易 $\tx$ 发生后的累积 gas 使用量;
+	%\item $R_u\in\N_{256}$ is the cumulative gas used \emph{in the epoch where $\tx$ is executed} as of immediately after $\tx$ has been processed;
 	
-	\item $R_f\in\N_{256}$ is the gas fee charged for the current transaction. 
+	\item $R_f\in\N_{256}$ 是当下交易收取的 gas 费用。
+	%\item $R_f\in\N_{256}$ is the gas fee charged for the current transaction. 
 	
-	\item $R_g \in \B$ denotes whether the gas fee is sponsored. 
+	\item $R_g \in \B$ 表示 gas 费用是否被赞助。
+	%\item $R_g \in \B$ denotes whether the gas fee is sponsored. 
 
-	\item $R_{\bf l}$ is the set of logs created in the execution of $\tx$;
+	\item $R_{\bf l}$ 是交易 $\tx$ 执行中产生的日志集合。
+	%\item $R_{\bf l}$ is the set of logs created in the execution of $\tx$;
 
-	\item $R_b\in\B_{2048}$ is the Bloom filter composed from logs in $R_{\bf l}$;
+	\item $R_b\in\B_{2048}$ 是由 $R_{\bf l}$ 中的日志所组成的布隆过滤器。
+	%\item $R_b\in\B_{2048}$ is the Bloom filter composed from logs in $R_{\bf l}$;
 
-	\item $R_z\in\N$ is the status code of the transaction $\tx$.
+	\item $R_z\in\N$ 是交易 $\tx$ 的状态代码。
+	%\item $R_z\in\N$ is the status code of the transaction $\tx$.
 	
-	\item $R_s \in \B$ denotes whether the storage collateral is sponsored. 
+	\item $R_s \in \B$ 表示存储抵押是否被赞助。
+	%\item $R_s \in \B$ denotes whether the storage collateral is sponsored. 
 	
-	\item $R_{\bf o}$ is the set of incremental storage (in bytes) for addresses in the execution of $\tx$;
+	\item $R_{\bf o}$ 是 $\tx$ 的执行中地址的存储增量（以字节为单位）的集合。
+	%\item $R_{\bf o}$ is the set of incremental storage (in bytes) for addresses in the execution of $\tx$;
 
-	\item $R_{\bf i}$ is the set of decremental storage (in bytes) for addresses in the execution of $\tx$;
+	\item $R_{\bf i}$ 是 $\tx$ 的执行中地址的存储减量（以字节为单位）的集合。
+	%\item $R_{\bf i}$ is the set of decremental storage (in bytes) for addresses in the execution of $\tx$;
 \end{itemize}
 
-The sequence $R_{\bf l}\eqdef \left(O_0,O_1,\dots\right) \in \left(\B_{160} \times \left(\B_{256}\right)^*\times \B_*\right)^*$ is a series of log entries,
-where each log entry $O$ is a tuple of the logger's address $O_a\in \B_{160}$,
-a possibly empty series of $256$-bit log topics $O_{\bf t}\eqdef \left(O_{{\bf t}_0}, O_{{\bf t}_1},\dots \right)$, such that $O_{{\bf t}_i}\in\B_{256}$ for every $i\in\N$,
-and a sequence of data $O_{\bf d}\in\B_*$:
+序列 $R_{\bf l}\eqdef \left(O_0,O_1,\dots\right) \in \left(\B_{160} \times \left(\B_{256}\right)^*\times \B_*\right)^*$ 由一系列日志条目组成，
+%The sequence $R_{\bf l}\eqdef \left(O_0,O_1,\dots\right) \in \left(\B_{160} \times \left(\B_{256}\right)^*\times \B_*\right)^*$ is a series of log entries,
+其中每条日志 $O$ 都是一个三元组。该三元组包括日志地址 $O_a\in \B_{160}$ ，
+%where each log entry $O$ is a tuple of the logger's address $O_a\in \B_{160}$,
+可为空集的 256 比特日志标题 $O_{\bf t}\eqdef \left(O_{{\bf t}_0}, O_{{\bf t}_1},\dots \right)$（其中 $O_{{\bf t}_i}\in\B_{256}$ 所有的自然数 i 都成立），
+%a possibly empty series of $256$-bit log topics $O_{\bf t}\eqdef \left(O_{{\bf t}_0}, O_{{\bf t}_1},\dots \right)$, such that $O_{{\bf t}_i}\in\B_{256}$ for every $i\in\N$,
+以及数据序列 $O_{\bf d}\in\B_*$：
+%and a sequence of data $O_{\bf d}\in\B_*$:
 \begin{align}
 	O\eqdef \left( O_a, O_{\bf t}, O_{\bf d} \right)
 \end{align}
 
-The Bloom filter function $M$ reduces a log entry into a single $256$-byte ($2048$-bit) hash as follows:
+布隆过滤器函数 $M$ 将一条日志缩减为一个 256 字节（2048 比特）哈希值：
+%The Bloom filter function $M$ reduces a log entry into a single $256$-byte ($2048$-bit) hash as follows:
 \begin{align}
  	M(O)\eqdef \bigvee_{x\in\set{O_a}\union O_{\bf t}}\left( M_{3:2048}(x) \right)
 \end{align} 
-where $M_{3:2048}$ is the specialized Bloom filter that sets three out of $2048$ bits to $1$ on input of an arbitrary byte sequence,
-as formally defined in \cite{ETH_yellow}.
+其中 $M_{3:2048}$ 是一个特定的布隆过滤器，
+%where $M_{3:2048}$ is the specialized Bloom filter
+它根据一个随机字节序列的输入，将 2048 位中的 3 位数值设置为 1。
+%that sets three out of $2048$ bits to $1$ on input of an arbitrary byte sequence,
+正式定义请见 \cite{ETH_yellow}。
+%as formally defined in \cite{ETH_yellow}.
 
-The sequence $R_{\bf o}\eqdef \left(P_0,P_1,\dots\right) \in \left(\B_{160} \times \B_{256}\right)^*$ where each entry $P$ is a tuple of an address and the incremental storage collateral of such address. $R_{\bf o}$ only collects the addresses with positive incremental storage collateral. It is sorted in ascending order of addresses and each address only appears once. $R_{\bf i}$ has the same settings as $R_{\bf o}$.
+序列 $R_{\bf o}\eqdef \left(P_0,P_1,\dots\right) \in \left(\B_{160} \times \B_{256}\right)^*$ 中每一项 $P$ 都是一个由地址，该地址的存储抵押增量组成的元组。
+%The sequence $R_{\bf o}\eqdef \left(P_0,P_1,\dots\right) \in \left(\B_{160} \times \B_{256}\right)^*$ where each entry $P$ is a tuple of an address and the incremental storage collateral of such address. 
+$R_{\bf o}$ 仅收集存储抵押增量为正的地址。
+%$R_{\bf o}$ only collects the addresses with positive incremental storage collateral. 
+其以地址进行升序排列，且每个地址只出现一次。
+%It is sorted in ascending order of addresses and each address only appears once. 
+$R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
+%$R_{\bf i}$ has the same settings as $R_{\bf o}$.
 
-\subsubsection{Serialization}
+\subsubsection{序列化}
+%\subsubsection{Serialization}
 
-The function $L_B$ and $L_H$ are the preparation functions for a block and block header respectively (similar as $L_{\tx}$ defined in \cref{def:tx_prepare}),
-where we recall that $L_{\tx}^*$ and $L_H^*$ refer to element-wise sequence transformations.
-We assert the types and order of the structure when the $\rlp$ transformation is required:
+函数 $L_B$ 和 $L_H$ 分别是区块和区块头的预备函数（定义类似于 \cref{def:tx_prepare} 中定义的 $L_{\tx}$），其中 $L_{\tx}^*$ 和 $L_H^*$ 如前文中定义，代表逐元素序列转化。
+%The function $L_B$ and $L_H$ are the preparation functions for a block and block header respectively (similar as $L_{\tx}$ defined in \cref{def:tx_prepare}),
+%where we recall that $L_{\tx}^*$ and $L_H^*$ refer to element-wise sequence transformations.
+当需要使用 $\rlp$ 转换时，我们要求结构的类型和顺序如下：
+%We assert the types and order of the structure when the $\rlp$ transformation is required:
 %
 \begin{align}
 	L_H(\head) &\equiv \left(\head_p,\head_h,\head_s,\head_s,\head_a,\head_t,\head_r,\head_e,\head_b,\head_m,\head_d,\head_w,\head_\ell,\head_o,\head_c[0],\cdots,\head_c[-1],\head_n\right)\\
 	L_B(\block) &\equiv \left( L_H(\block_\head), L_{\tx}^*(\block_\txs) \right)
 \end{align}
 
-In addition, we let $L_O$ be the preparation function for the referee blocks as follows:
+另外，我们用 $L_O$ 表示引用区块的预备方程，其定义如下：
+%In addition, we let $L_O$ be the preparation function for the referee blocks as follows:
 \begin{align*}
 	L_O(\head)\equiv L_H^*(\head_o)
 \end{align*}

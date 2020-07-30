@@ -22,8 +22,8 @@
 
 \documentclass[fleqn,10pt]{SelfArx} % Document font size and equations flushed left
 
-
-\usepackage[english]{babel} % Specify a different language here - english by default
+\usepackage[UTF8]{ctex}
+%\usepackage[english]{babel} % Specify a different language here - english by default
 
 % \usepackage{lipsum} % Required to insert dummy text. To be removed otherwise
 
@@ -117,10 +117,10 @@
 \JournalInfo{[Oceanus v0.6.0]} % Journal information
 \Archive{\today} % Additional notes (e.g. copyright, DOI, review/research article)
 
-\PaperTitle{{\name} Protocol Specification} % Article title
+\PaperTitle{{\name} 技术规范} % Article title
 
-\Authors{Chenxing Li\textsuperscript{$\dagger$}, Guang Yang\textsuperscript{$\dagger$} } % Authors
-\affiliation{\textsuperscript{$\dagger$}\textit{{\name} Dev Team} 
+\Authors{李辰星\textsuperscript{$\dagger$}, 杨光\textsuperscript{$\dagger$} } % Authors
+\affiliation{\textsuperscript{$\dagger$}\textit{{\name} 研究组} 
 \begin{figure}[ht]\centering
 \includegraphics[width=0.5\linewidth]{figs/logo}
 \end{figure}
@@ -136,17 +136,15 @@
 %----------------------------------------------------------------------------------------
 
 \Abstract{
-The success of Bitcoin and its follow-ups have demonstrated the value of decentralized consensus system among anonymous participants not trusting each other.
-On top of the consensus network there can be a public ledger or even a general state transition machine, 
-such that all participants agree on the state of the ledger or the state machine.
-Conceptually the state machine can be Turing-complete and hence essentially a ``world computer'' shared by all participants, whose results cannot be tampered by any single person or entity.
-However, the processing power of the shared state machine is currently bottlenecked on the throughput of underlying consensus system.
+比特币及其追随者们的成功已向世界展示了在互不信任的匿名用户间达成的去中心化共识所蕴含的价值。
+以此共识为基础，我们可以构建由全用户一致认同的公共账本或共享状态机。
+概念上该状态机可具备图灵完备性，并因此成为一台由所有用户共享的、存储内容无法被任何个人或组织所篡改的“世界计算机”。
+然而，现有底层共识系统的的低吞吐率极大限制了共享状态机的处理能力和应用规模。
 
-{\name} implements a Turing-complete state machine on top of a high-throughput consensus network.
-% , which is capable of handling thousands of transactions per second.
-To achieve a throughput of thousands of transactions per second, {\name} guarantees consensus on the total order of blocks organized in a \tg.
-In this way, all forked blocks contribute to the security and throughput of {\name} as well.
-In this work we discuss {\name} protocol design and implementation specifications.
+
+{\name} 以高吞吐的共识网络为基础，实现了每秒可处理数千件事务的、图灵完备的状态机。
+为达到每秒处理数千件事务的高吞吐率，{\name} 采用独创的树图（Tree-Graph）结构确保用户对所有区块的先后顺序快速达成共识。这种\tg 结构充分调用所有分叉区块，对系统安全性和吞吐率同时产生贡献。
+本文将介绍 {\name} 的协议设计及其具体实现中的参数选择和规范。
 }
 
 %-----------------------------------------------------------------------------------------
