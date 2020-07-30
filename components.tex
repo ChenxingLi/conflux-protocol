@@ -388,17 +388,17 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 	%\item {\bf value:} A scalar value equal to the amount of \unit that the transactions sender wants to transfer to the recipient, i.e. the account specified in $\tx_a$ or the newly created contract.Formally denoted by $\tx_v\in\N_{256}$.
 
 
-	\item \newversion{{\bf storageLimit:} 
+	\item {\bf storageLimit:} 
 	一个以字节为单位的标量值，表示 $\tx$ 执行所用的最大存储增量。
-	正式记作 $\tx_{\ell}\in\N_{64}$.}
+	正式记作 $\tx_{\ell}\in\N_{64}$.
 	%A scalar value indicating the maximum increment of storage used in the execution of $\tx$, measured in bytes. Formally denoted by $\tx_{\ell}\in\N_{64}$.}
 
-	\item \newversion{{\bf epochHeight:} 
-	一个标量值，标明 $\tx$ 可被执行的纪元区间。正式记作 $\tx_e\in\N_{64}$，表示 $\tx$ 只可在 $[\tx_e - \txepochbound, \tx_e + \txepochbound]$ 区间内的纪元被执行。}
+	\item {\bf epochHeight:} 
+	一个标量值，标明 $\tx$ 可被执行的纪元区间。正式记作 $\tx_e\in\N_{64}$，表示 $\tx$ 只可在 $[\tx_e - \txepochbound, \tx_e + \txepochbound]$ 区间内的纪元被执行。
 	%A scalar value specifying the range of epochs where $\tx$ can be executed. Formally denoted by $\tx_e\in\N_{64}$ such that $\tx$ can only be executed between the epochs of $[\tx_e - \txepochbound, \tx_e + \txepochbound]$. }
 
-	\item \newversion{{\bf chainID:} 
-	一个链 ID 值，表示 $\tx$ 想被执行的链 ID。正式记作 $\tx_c\in\N_{32}$，且 {\name} 的链特征是一个常数 $\tx_c=503$。
+	\item {\bf chainID:} 
+	一个链 ID 值，表示 $\tx$ 想被执行的链 ID。正式记作 $\tx_c\in\N_{32}$，且 {\name} 的链特征是一个常数 $\tx_c=\chainid$。
 	%A binary chain id indicating where $\tx$ is intended to be executed. Formally denoted by $\tx_c\in\N_{32}$ and the chain id of {\name} is a constant $\tx_c=503$.} 
 
 	\item {\bf v, r, s:} 
