@@ -51,7 +51,7 @@ $\mathsf{Type}_{\account}=\typecontract$ 表示 \emph{(Solidity) 合约},
 一个账户的基本状态 $\account_{basic} \eqdef\left( \account_n, \account_b, \account_c,\account_t, \account_o, \account_r, \account_a, \account_p\right)$ 由以下域组成：
 %An account basic state $\account_{basic} \eqdef\left( \account_n, \account_b, \account_c,\account_t, \account_o, \account_r, \account_a, \account_p\right)$ consists of the following fields. 
 \begin{itemize}[nosep]
-	\item {\bf 序列号(nonce):} 一个正式表达为 $\account_n\in \N_{256}$ 的计数标量，用以记录由账户发起的历史活动数。例如，从 $\account_{addr}$ 发出的所有历史交易的数量。而对于合约账户，“nonce”（现时）表示其所创造的合约数量。
+	\item {\bf 序列号(nonce):} 一个正式表达为 $\account_n\in \N_{256}$ 的计数标量，用以记录由账户发起的历史活动数。例如，从 $\account_{addr}$ 发出的所有历史交易的数量。而对于合约账户，序列号表示其所创造的合约数量。
 	%\item {\bf nonce:} A scalar counter recording the number of previous activities initiated by this account. Formally denoted by $\account_n\in \N_{256}$. For example, the number of transactions sent from $\account_{addr}$, or the number of contract-creations in the case this account is associated with codes.
 	%原翻译：一个计数标量，由 $\account_n$ 表示。“nonce”（现时）记录一个账户的历史活动数量，例如历史上从 $\account_{addr}$ 发出的所有交易的数量。对于合约账户，现时表示其所创造的合约数量。
 
@@ -186,7 +186,7 @@ $\\$
 Conflux 将各账户的各组成部分以 $(k,v)\in \B^*\times \B^*$ 格式分别编码。
 %Conflux encodes each component of each account in format of $(k,v)\in \B^*\times \B^*$ respectively. 
 
-\paragraph{基本项} 基本项包含基本组成部分 $\account_{basic}$。对于一个非合约地址，Conflux 不存储只与合约相关的域，例如代码哈希 $\account_c$，合约管理员地址 $\account_a$，和资助者信息 $\account_p$。
+\paragraph{基本项} 基本项包含基本组成部分 $\account_{basic}$。对于一个非合约地址，Conflux 不存储只与合约相关的域，例如代码哈希 $\account_c$，管理账户 $\account_a$，和资助信息 $\account_p$。
 %\paragraph{Basic entry.} The basic entry stores basic components $\account_{basic}$. Specially, for a non-contract address, Conflux doesn't stores the fields only related to contract, like code hash $\account_c$, contract admin $\account_a$ and sponsor info $\account_p$. 
 我们用 $\account_{basic\_smp}\eqdef (\account_n, \account_b, \account_t, \account_o, \account_r)$ 表示普通地址包含的基本组成部分。正式表达为
 %Let $\account_{basic\_smp}\eqdef (\account_n, \account_b, \account_t, \account_o, \account_r)$ denote the basic component with only the fields in a normal address. Formally
@@ -369,7 +369,7 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 	%\item {\bf gasPrice:} A scalar value indicating the number of \unit to be paid per unit of gas that is consumed as a result of the execution of $\tx$. Formally denoted by $\tx_p\in\N_{256}$.
 
 	\item {\bf 燃料量(gasLimit):} 
-	一个标量值，记作 $\tx_g\in\N_{256}$，表示交易发送方愿意为执行交易 $\tx$ 所花费的燃料\emph{总量}。该笔金额将在最开始支付完成，先于其他所有计算之前，并不允许后续追加或退款。交易的发送方负责保证交易的 gasLimit 不会过高，以避免不必要的燃料浪费。
+	一个标量值，记作 $\tx_g\in\N_{256}$，表示交易发送方愿意为执行交易 $\tx$ 所花费的燃料\emph{总量}。该笔金额将在最开始支付完成，先于其他所有计算之前，并不允许后续追加或退款。交易的发送方负责保证交易的 \emph{燃料连量} 不会过高，以避免不必要的燃料浪费。
 	%\item {\bf gasLimit:} A scalar value indicating the \emph{total} amount of gas paid for the cost of the execution of $\tx$. This is paid up-front, before any actual computation is done, and may not be increased or refunded later. 
 	%Formally denoted by $\tx_g\in\N_{256}$.
 	%It is the transaction sender's responsibility to avoid any extravagance caused by an unnecessarily high {\bf gasLimit}.
@@ -397,7 +397,7 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 	一个标量值，标明 $\tx$ 可被执行的纪元区间。正式记作 $\tx_e\in\N_{64}$，表示 $\tx$ 只可在 $[\tx_e - \txepochbound, \tx_e + \txepochbound]$ 区间内的纪元被执行。
 	%A scalar value specifying the range of epochs where $\tx$ can be executed. Formally denoted by $\tx_e\in\N_{64}$ such that $\tx$ can only be executed between the epochs of $[\tx_e - \txepochbound, \tx_e + \txepochbound]$. }
 
-	\item {\bf 链ID(chainID):} 
+	\item {\bf 链 ID(chainID):} 
 	一个链 ID 值，表示 $\tx$ 想被执行的链 ID。正式记作 $\tx_c\in\N_{32}$，且 {\name} 的链特征是一个常数 $\tx_c=\chainid$。
 	%A binary chain id indicating where $\tx$ is intended to be executed. Formally denoted by $\tx_c\in\N_{32}$ and the chain id of {\name} is a constant $\tx_c=503$.} 
 
@@ -414,7 +414,7 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
  	\item {\bf 初始化代码(init):} 
  	一个不限制大小的字节数组，用来指定账户初始化程序的 EVM 代码，正式记作 $\tx_{\bf i} \in \Byte^*$ 。
  	%A byte array specifying the \cvm code for the initialization procedure, formally denoted by $\tx_{\bf i} \in \Byte^*$.
- 	{\bf init} 仅在合约创建时被执行一次，随后即被遗弃。
+ 	\emph{初始化代码} 仅在合约创建时被执行一次，随后即被遗弃。
  	执行这段代码将返回另一代码片段 {\bf body}，这是合约账户每次收到消息调用时都会执行的实际合约代码（可以由交易或内部代码执行触发）。 
  	%Note that {\bf init} is executed once and discarded thereafter, and it returns another code fragment {\bf body} as the actual contract code that will be executed each time the contract account receives a message call (either through a transaction or due to the internal execution of code).
 
@@ -483,7 +483,7 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 	\end{itemize}
 	
 	
-	\item {\bf 延迟收据根哈希(deferredReceiptsRoot):} 当区块 {\bf deferredStateRoot} 域更新时产生的每一笔交易收据的256 比特 Keccak 哈希承诺，正式记作 $\head_e\in\B_{256}$。
+	\item {\bf 延迟收据根哈希(deferredReceiptsRoot):} 当区块 \emph{延迟状态根哈希} 域更新时产生的每一笔交易收据的256 比特 Keccak 哈希承诺，正式记作 $\head_e\in\B_{256}$。
 	%\item {\bf deferredReceiptsRoot:} The Keccak 256-bit hash commitment of the receipts of each transaction executed when updating the {\bf deferredStateRoot} field of the block, formally $\head_e\in\B_{256}$. 
 	\begin{itemize}
 		\item 若 {\bf blame} 域为非零，即 $\head_m=0$，$\head_e$ 是一个trie 结构的 256 比特 Keccak 哈希根，由当下纪元的所有交易收据共同构造。
@@ -494,18 +494,18 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 	\end{itemize}
 	
 	
-	\item {\bf 延迟日志过滤器哈希(deferredLogsBloomHash):} 一个关于 {\bf deferredStateRoot} 域值更新所产生的所有交易收据的日志地址和日志标题等可索引信息的布隆过滤器（Bloom filter）的256 比特 Keccak 哈希承诺，记为 $\head_b$。	
+	\item {\bf 延迟日志过滤器哈希(deferredLogsBloomHash):} 一个关于 \emph{延迟状态根哈希} 域值更新所产生的所有交易收据的日志地址和日志标题等可索引信息的布隆过滤器（Bloom filter）的256 比特 Keccak 哈希承诺，记为 $\head_b$。	
 	%\item {\bf deferredLogsBloomHash:} The Keccak 256-bit hash commitment of the Bloom filter composed from indexable information (logger address and log topics) contained in each log entry from the receipts of all transactions executed when updating the {\bf deferredStateRoot} field, formally $\head_b\in\B_{256}$.
 	\begin{itemize}
 		\item 若 {\bf blame} 域为非零，即 $\head_m=0$，$\head_b$ 是一个布隆过滤器的 256 比特 Keccak 哈希承诺，由当下纪元的所有交易收据共同构造。
-		\item If the {\bf blame} field is zero, i.e. $\head_m=0$, then $\head_b$ is the Keccak 256-bit hash commitment of the Bloom filter composed from receipts of transactions in the epoch that is just executed.
+		%\item If the {\bf blame} field is zero, i.e. $\head_m=0$, then $\head_b$ is the Keccak 256-bit hash commitment of the Bloom filter composed from receipts of transactions in the epoch that is just executed.
 	
 		\item 否则，若 $\head_m>0$，$\head_b$ 将是一个向量的 256 比特 Keccak 哈希。该向量的组成部分是 满足前一情况的布隆过滤器承诺，和所有 $\block$ 的祖先区块中 {\bf blame} 域值非零的校正后布隆过滤器承诺。
 		%\item Otherwise if $\head_m>0$, then $\head_b$ will be the Keccak 256-bit hash of the vector consisting of the Bloom filter commitment in the previous case and the corrected Bloom filter commitments of $\block$'s ancestors until (not including) the first ancestor that is not blamed.
 	\end{itemize}
 
 	\item {\bf blame:} 一个标量值 $\head_{m}\in\N_{32}$，表示所在枢轴链中
-	区块头执行状态域 {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, 或 {\bf blame} 有误的区块个数。
+	区块头执行状态域 \emph{延迟状态根哈希}, \emph{延迟收据根哈希}, \emph{延迟日志过滤器哈希}, 或 {\bf blame} 有误的区块个数。
 	此域值（{\bf blame}）与奖励分配相关。
 	例如，若 $\parent{\block}$ 在以上四个执行状态域都无误，则 $\head_{m}=0$；若 $\parent{\block}$ 在以上四个执行状态域的任意域有误，则 $\head_{m} \ge 1$。
 	%\item {\bf blame:} A scalar value $\head_{m}\in\N_{32}$ indicating the number of immediate ancestors whose header is incorrect in the execution state fields: {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, or {\bf blame}. 
@@ -533,7 +533,7 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 	%\item {\bf customData:} A customized field with an arbitrary length list of byte string $\head_c\in (\Byte^*)^*$. 
 
 	% {The following corresponds to the PoW part:}
-	\item {\bf mixHash:} 一个 256 比特哈希，用以与 {\bf nonce} 共同证明当前区块已有足够计算量背书；正式表达为 $\head_x\in\B_{256}$。
+	\item {\bf mixHash:} 一个 256 比特哈希，用以与 \emph{序列号(nonce)} 共同证明当前区块已有足够计算量背书；正式表达为 $\head_x\in\B_{256}$。
 	%\item {\bf mixHash:} A $256$-bit hash which, combined with the {\bf nonce}, proves that a sufficient amount of computation has been carried out on this block; formally $\head_x\in\B_{256}$. 
 
 	\item {\bf 随机数(nonce):} 一个 256 比特的值，用于证明当前区块已有足够计算量背书，表示为 $\head_n\in\B_{256}$。
@@ -565,7 +565,7 @@ $\block$ 的另一部分是一个交易列表。因此区块 $\block$ 可使用�
 
 为了方便快速地验证交易结果，我们在每笔交易执行过程中记录下一些特定的信息并编码为 \emph{“交易收据”}。
 %For convenience and easy verification of the outcome of transaction execution, we introduce \emph{transaction receipt} to record certain information of every executed transaction.
-每当更新一个区块的 {\bf stateRoot} $\head_r$ 时，
+每当更新一个区块的 \emph{延迟状态根哈希} $\head_r$ 时，
 我们以 $\block_{\rec}[i]$ 表示第 i 笔交易的收据，将所有收据储存在一个以索引为键的 trie 树里。
 此树根的哈希值 $\head_e\in\B_{256}$ 被存储在区块头中。
 %When updating the {\bf deferredStateRoot} $\head_r$ of a block,
