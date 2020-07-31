@@ -685,42 +685,55 @@ $R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
 %With the $\rlp$ transformation we can further serialize this structure into a sequence of bytes ready for transmission and storage. 
 
   
-\subsubsection{Well-formedness}
+\subsubsection{良构性}
+%\subsubsection{Well-formedness}
 \label{sec:internal consistency}
-Every {\name} block $\block$ (with header $\head=\head(\block)$) is \emph{well-formed} if and only if it is internally consistent and satisfies the following: 
+当且仅当一个（区块头为 $\head=\head(\block)$ 的） {\name} 区块 $\block$ 是自洽且符合以下条件的，我们成改区块为良构的：
+%Every {\name} block $\block$ (with header $\head=\head(\block)$) is \emph{well-formed} if and only if it is internally consistent and satisfies the following: 
 \begin{align}
 	\head_t = \trie\left(\forall i<||\block_{\txs}||, i\in \N: \left(\rlp(i),\rlp(L_{\tx}(\block_{\txs}[i]))\right) \right)  
 \end{align}
 
-Intuitively, a block $\block$ is well-formed if its header $\head$ is consistent with the contents inside $\block$.
-In other words, $\head$ effectively represents the whole block $\block$.
+直观而言，若一个区块 $\block$ 的区块头 $\head$ 与其区块内容是一致的，则它是良构的。
+%Intuitively, a block $\block$ is well-formed if its header $\head$ is consistent with the contents inside $\block$.
+换言之，区块头 $\head$ 有效代表了整个区块 $\block$。
+%In other words, $\head$ effectively represents the whole block $\block$.
 
 
 
 
-\subsubsection{Block Header Validity}
+\subsubsection{区块头的合法性}
+%\subsubsection{Block Header Validity}
 \label{sec:valid header}
 
-Given a block $\block$ with header $\head=\head(\block)$, 
-we decide whether the header $\head$ is valid by 
-checking the following fields of $\head$
-and comparing to $\head\big(\parentf(\block)\big)$ and $\past(\block)$ when necessary:
+为了判断一个区块 $\block$ 的区块头 $\head=\head(\block)$ 是否合法，
+%Given a block $\block$ with header $\head=\head(\block)$, 
+我们将检查区块头 $\head$ 的以下域，并在必要时将其与 $\head\big(\parentf(\block)\big)$ 和 $\past(\block)$ 进行对比：
+%we decide whether the header $\head$ is valid by checking the following fields of $\head$
+%and comparing to $\head\big(\parentf(\block)\big)$ and $\past(\block)$ when necessary:
 
 \begin{itemize}[nosep]
-	\item the height is increased by one;
-	\item the timestamp (in Unix's time()) is increased;
+	\item 高度增加一；
+	\item 以 Unix 时间计算的时间戳有所增加；
+	%\item the height is increased by one;
+	%\item the timestamp (in Unix's time()) is increased;
 
-	\item the canonical gas limit does not change too much (i.e. more than $1/1024$) and it remains above $\minblockgaslimit$;
+	\item 燃料消耗上限的变化不超过 $1/1024$，且不低于 $\minblockgaslimit$；
+	%\item the canonical gas limit does not change too much (i.e. more than $1/1024$) and it remains above $\minblockgaslimit$;
 
-	\item the target difficulty is properly set according to Section~\ref{sec:difficulty};
+	\item 目标难度按照第 \ref{sec:difficulty} 节正确设置；
+	%\item the target difficulty is properly set according to Section~\ref{sec:difficulty};
 
-	\item the proof-of-work quality exceeds the target difficulty; 
+	\item 工作量证明符合目标难度值；
+	%\item the proof-of-work quality exceeds the target difficulty; 
 
 	% \item the {\bf extraData} is no more than $32$ bytes;
 
-	\item the parent is chosen properly from $\past(\block)$ (the past view of $\block$) following the GHAST rule;
+	\item 在区块 $\block$ 的 \emph{过去区块} 中，其父块的选择遵守 GHAST 规则\cite{GHOST}；
+	%\item the parent is chosen properly from $\past(\block)$ (the past view of $\block$) following the GHAST rule;
 
-	\item the adaptive weight flag {\bf adaptiveWeight} must set properly according to the GHAST rule with respect to $\past(\block)$;
+	\item 对于 $\block$ 的过去区块，自适应权重标志 {\bf adaptiveWeight} 必须根据 GHAST 规则正确设置
+	%\item the adaptive weight flag {\bf adaptiveWeight} must set properly according to the GHAST rule with respect to $\past(\block)$;
 
 	% \item the deferred receipt root {\bf deferredReceiptRoot} and deferred Bloom filter of receipt logs {\bf deferredLogsBloomHash} must be correct as right after $\epf\left(\parentf^{(\dfb)}(\block)\right)$;
 
@@ -728,13 +741,15 @@ and comparing to $\head\big(\parentf(\block)\big)$ and $\past(\block)$ when nece
 
 	% \item the transaction root {\bf transactionRoot} is properly generated;
 
-	\item the referee list {\bf refereeHash} properly decomposes to block headers.
+	\item 引用列表 {\bf refereeHash} 适当地分化为区块头。
+	%\item the referee list {\bf refereeHash} properly decomposes to block headers.
 
 \end{itemize}
 
 \medskip
 
-Formally, the header $\head$ is valid if and only if: 
+正式地，当且仅当区块头 $\head$ 满足以下条件时， 它是合法的：
+%Formally, the header $\head$ is valid if and only if: 
 
 
 \begin{align}
@@ -757,18 +772,6 @@ Formally, the header $\head$ is valid if and only if:
 \end{align}
 
 
-\oldversion{
-	In (\ref{eq:stateroot}), $\st$ refers to the base state just before executing $\epf\left(\parentf^{(\deferblk)}(\block)\right)$.
-	In particular, $\st$ is exactly the final state after executing $\parentf^{(\dfbresult)}(\block)$.
-	% 
-	Furthermore,
-	recalling that $L_S$ is the world-state collapse function, 
-	% and the parent block of $\block$ contains in its header exactly the state root after executing :
-	the state root of $\st$ is stored in the header of $\parentf(\block)$ and it satisfies the following:
-	\begin{align}
-		\trie\left( L_S(\st)\right)= \parentf(\block)_{\head_r}
-	\end{align}
-}
 
 \newversion{
 	We remark that the validity of $\head$ only matters for consensus of total order of blocks,
