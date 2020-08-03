@@ -774,12 +774,14 @@ $R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
 
 
 \newversion{
-	We remark that the validity of $\head$ only matters for consensus of total order of blocks,
-	and it \emph{does not} rely on the correctness of the execution related fields {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash} and {\bf blame} of the header, 
-	i.e. ${\head_r}, {\head_e}, {\head_b}$ and ${\head_m}$ of $\head$ respectively.
-	However, being incorrect in these fields may indicate that the author of the block fails to maintain the state and execute the transactions properly, 
-	in which case we still count the contribution of this block to consensus but the author gets no reward,
-	as discussed in Section~\ref{sec:blaming} and Section~\ref{sec:incentive}.
+	区块头 $\head$ 的合法性仅与区块全序的共识有关，并不依赖于区块头内与执行相关的域({\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash} 和 {\bf blame})的正确性，即 $\head$ 中 ${\head_r}, {\head_e}, {\head_b}$ 和 ${\head_m}$ 的正确性。
+	%We remark that the validity of $\head$ only matters for consensus of total order of blocks,and it \emph{does not} rely on the correctness of the execution related fields {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash} and {\bf blame} of the header, i.e. ${\head_r}, {\head_e}, {\head_b}$ and ${\head_m}$ of $\head$ respectively.
+	然而，这些域的错误值可能表明区块挖掘者未能维持(Conflux 系统的)状态并正确地执行交易。
+	%However, being incorrect in these fields may indicate that the author of the block fails to maintain the state and execute the transactions properly, 
+	这种情况下，我们仍承认该区块对共识所作的贡献，但挖掘者不得到任何奖励。
+	%in which case we still count the contribution of this block to consensus but the author gets no reward,
+	以上内容在第 \ref{sec:blaming} 和 \ref{sec:incentive} 节中进行了讨论。
+	%as discussed in Section~\ref{sec:blaming} and Section~\ref{sec:incentive}.
 }
 
 \subsubsection{Partially (In)Valid Blocks}
