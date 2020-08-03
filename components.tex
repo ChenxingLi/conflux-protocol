@@ -774,7 +774,7 @@ $R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
 
 
 \newversion{
-	区块头 $\head$ 的合法性仅与区块全序的共识有关，并不依赖于区块头内与执行相关的域({\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash} 和 {\bf blame})的正确性，即 $\head$ 中 ${\head_r}, {\head_e}, {\head_b}$ 和 ${\head_m}$ 的正确性。
+	区块头 $\head$ 的合法性仅与区块全序的共识有关，并不依赖于区块头内与执行相关的域( {\bf 延迟状态根哈希}, {\bf 延迟收据根哈希}, {\bf 延迟日志过滤器哈希}, 和 {\bf blame})的正确性，即 $\head$ 中 ${\head_r}, {\head_e}, {\head_b}$ 和 ${\head_m}$ 的正确性。
 	%We remark that the validity of $\head$ only matters for consensus of total order of blocks,and it \emph{does not} rely on the correctness of the execution related fields {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash} and {\bf blame} of the header, i.e. ${\head_r}, {\head_e}, {\head_b}$ and ${\head_m}$ of $\head$ respectively.
 	然而，这些域的错误值可能表明区块挖掘者未能维持(Conflux 系统的)状态并正确地执行交易。
 	%However, being incorrect in these fields may indicate that the author of the block fails to maintain the state and execute the transactions properly, 
@@ -832,46 +832,80 @@ $R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
 
 
 
-\subsubsection{Blaming Mechanism}
+\subsubsection{Blaming 机制}
+%\subsubsection{Blaming Mechanism}
 \label{sec:blaming}
 	
-	The {\bf blame} field is introduced for easy verification of states by light nodes.
-	Intuitively, this field represents the vote to the latest ancestor block which commits to a correct state, 
-	i.e. the author of the current block agrees with the committed state (represented in {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, and {\bf blame}) of that block.
-	We emphasize that these fields are \emph{not} checked for validity of a block, however, committing to an incorrect state may lead to loss of block reward.
+	为使轻量级节点可对状态进行简单验证，我们启用 {\bf blame} 域。
+	%The {\bf blame} field is introduced for easy verification of states by light nodes.
+	直观而言，此域代表着一张投票，对象是提交正确状态的最后一个祖先区块。
+	%Intuitively, this field represents the vote to the latest ancestor block which commits to a correct state, 
+	即，当前区块的挖掘者认可该祖先区块由 {\bf 延迟状态根哈希}, {\bf 延迟收据根哈希}, {\bf 延迟日志过滤器哈希}, 和 {\bf blame} 组成的提交状态。
+	%i.e. the author of the current block agrees with the committed state (represented in {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, and {\bf blame}) of that block.
+	需要强调的是，我们不是为了区块合法性而对这些域进行检查。但是，提交一个错误状态可能导致区块奖励的丢失。
+	%We emphasize that these fields are \emph{not} checked for validity of a block, however, committing to an incorrect state may lead to loss of block reward.
 
 
+	确切地说，$\head(\block)_{m}$ 应该被设置为一个最小非负数，满足 $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ 在 {\bf 延迟状态根哈希}, {\bf 延迟收据根哈希}, {\bf 延迟日志过滤器哈希}, 和 {\bf blame} 四个域的正确性。
+	%More specifically, $\head(\block)_{m}$ should be set to the minimum non-negative number such that $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ is correct on all the four fields of {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, and {\bf blame}.
+	例如，若 $\parent{\block}$ 有错误的 $\head(\parent{\block})_{r}, \head(\parent{\block})_{e}, \head(\parent{\block})_{b}$ 或 $\head(\parent{\block})_{m}$ 域值，而 $\parentf^{(2)}(\block)$ 在以上域都正确，则 $\head(\block)_{m}$ 应该等于 $1$。 
+	%For example, $\head(\block)_{m}$ should be $1$ if $\parent{\block}$ is incorrect in $\head(\parent{\block})_{r}, \head(\parent{\block})_{e}, \head(\parent{\block})_{b}$ or $\head(\parent{\block})_{m}$ while $\parentf^{(2)}(\block)$ is correct in these fields.
 
-	More specifically, $\head(\block)_{m}$ should be set to the minimum non-negative number such that $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ is correct on all the four fields of {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, and {\bf blame}.
-	For example, $\head(\block)_{m}$ should be $1$ if $\parent{\block}$ is incorrect in $\head(\parent{\block})_{r}, \head(\parent{\block})_{e}, \head(\parent{\block})_{b}$ or $\head(\parent{\block})_{m}$ while $\parentf^{(2)}(\block)$ is correct in these fields.
+	那么，对于当下区块 $\block$ 而言，在 $\block$ 和 $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ 之间的所有区块，即 $\parentf(\block), \cdots, \parentf^{\left(\head(\block)_{m}\right)}(\block)$，
+	都提交了错误状态。
+	我们称这些区块被 $\block$ （直接） \emph{blame}。
+	%Then, in the current block $\block$'s view, all blocks in between of $\block$ and $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$, i.e. $\parentf(\block), \cdots, \parentf^{\left(\head(\block)_{m}\right)}(\block)$, are committing to incorrect states, for which we say that those blocks are (directly) \emph{blamed} by $\block$.
+	
+	此外，因为 $\block$ 认可 $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ 提交的系统状态，
+	%Furthermore, since $\block$ agrees with the state committed in $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$,
+	被 $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ 所 \emph{blame} 的区块将同样被 $\block$ （间接地） \emph{blame}。
+	%the blocks blamed by  $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ is also (indirectly) blamed by $\block$, 
+	从而我们递归地确定在 $\chain(\block)$ 上的所有被最新区块 $\block$ \emph{blame} 的区块。
+	%and recursively we can determine all the blocks on $\chain(\block)$ that are blamed by the newest block $\block$.
 
-	Then, in the current block $\block$'s view, all blocks in between of $\block$ and $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$, i.e. $\parentf(\block), \cdots, \parentf^{\left(\head(\block)_{m}\right)}(\block)$, are committing to incorrect states, for which we say that those blocks are (directly) \emph{blamed} by $\block$.
-	Furthermore, since $\block$ agrees with the state committed in $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$,
-	the blocks blamed by $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ is also (indirectly) blamed by $\block$, and recursively we can determine all the blocks on $\chain(\block)$ that are blamed by the newest block $\block$.
+	对于 $\chain(\block)$ （即 $\block$ 合法时 $\past(\block)$ 中的枢轴链）以外的区块，
+	%For blocks off $\chain(\block)$ (which is indeed the pivot chain in $\past(\block)$ as long as $\block$ is valid), 
+	我们进行一个最大努力测试来决定其是否被 $\block$ \emph{blame}。
+	%we do a best effort test to decide whether they are blamed by $\block$.
+	更确切地说，每个区块 $\block'$ 都确定了一组被 $\block'$ 沿着 $\chain(\block')$ 所 \emph{blame} 的区块。
+	%More precisely, every block $\block'$ must have determined a set of blocks blamed by $\block'$ along $\chain(\block')$,
+	
+	若两者没有在交集 $\chain(\block)\bigcap\chain(\block')$ 中被 blame 的区块集合上达到完全一致，则 $\block'$ 将被 $\block$ \emph{blame}。
+	%and $\block'$ is blamed by $\block$ if they do not agree on exactly the same set of blamed blocks in the intersection $\chain(\block)\bigcap\chain(\block')$.
+	
+	除此外，只要 $\block'$ 不位于当下的枢轴链上，我们对 $\block'$ 与执行相关的域 $\block'_r,\block'_e,\block'_b$ 将不进行其他检查。
+	%We remark that no further check is applied on the execution related fields $\block'_r,\block'_e,\block'_b$ of $\block'$ as long as $\block'$ is off the current pivot chain.
 
-	For blocks off $\chain(\block)$ (which is indeed the pivot chain in $\past(\block)$ as long as $\block$ is valid), 
-	we do a best effort test to decide whether they are blamed by $\block$.
-	More precisely,
-	every block $\block'$ must have determined a set of blocks blamed by $\block'$ along $\chain(\block')$,
-	and $\block'$ is blamed by $\block$ if they do not agree on exactly the same set of blamed blocks in the intersection $\chain(\block)\bigcap\chain(\block')$.
-	We remark that no further check is applied on the execution related fields $\block'_r,\block'_e,\block'_b$ of $\block'$ as long as $\block'$ is off the current pivot chain.
+	因此，我们确定了每个区块 $\block'$ 是否被任意其他区块 \emph{blame}。
+	%Thus we have determined for every block $\block'$ whether it is blamed by any other block $\block$.
+	对被 \emph{blame} 的区块（明确来说，被枢轴链上最后一个区块所 \emph{blame} 的区块）的惩罚在第 \ref{sec:incentive} 节中有具体说明。
+	%The punishment for blamed blocks (in particular, those blamed by the latest block on the pivot chain) is specified in Section~\ref{sec:incentive}.
 
-	Thus we have determined for every block $\block'$ whether it is blamed by any other block $\block$.
-	The punishment for blamed blocks (in particular, those blamed by the latest block on the pivot chain) is specified in Section~\ref{sec:incentive}.
-
-	In addition, the fields of state commitments, i.e. {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, 
-	would be handled differently when being blamed, as briefly described at the beginning of Section~\ref{sec:block}.
-	That is, if $\head_m>0$ and the those fields are blamed, 
-	then the commitment will be a Keccak hash of the vector consisting of the correct commitments.
-	For example, if a block $\block$ has $\head(\block)_m=2$ such that $\parentf(\block),\parentf^{(2)}(\block)$ are blamed but $\parentf^{(3)}(\block)$ is not, then the {\bf deferredStateRoot} field 
-	$\head(\block)_r$ of block $\block$
-	would be 
+	此外，状态承诺域，即 {\bf 延迟状态根哈希}, {\bf 延迟收据根哈希}, {\bf 延迟日志过滤器哈希},
+	%In addition, the fields of state commitments, i.e. {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, 
+	当被 \emph{blame} 时将以不同方式处理，同第 \ref{sec:block} 节开头所简单描述的一样。
+	%would be handled differently when being blamed, as briefly described at the beginning of Section~\ref{sec:block}.
+	即，若 $\head_m>0$ 且状态承诺域被 \emph{blame}，那么该承诺将是一个由正确承诺组成的向量的 Keccak 哈希。
+	%That is, if $\head_m>0$ and the those fields are blamed, then the commitment will be a Keccak hash of the vector consisting of the correct commitments.
+	
+	例如，若对于一个区块 $\block$，$\head(\block)_m=2$ 成立，即 $\parentf(\block),\parentf^{(2)}(\block)$ 被 \emph{blame} 而 $\parentf^{(3)}(\block)$ 没有，那么区块 $\block$ 的 {\bf 延迟状态根哈希} 域 $\head(\block)_r$ 应为：
+	%For example, if a block $\block$ has $\head(\block)_m=2$ such that $\parentf(\block),\parentf^{(2)}(\block)$ are blamed but $\parentf^{(3)}(\block)$ is not, then the {\bf deferredStateRoot} field $\head(\block)_r$ of block $\block$ would be 
 	\begin{align}
 		\head(\block)_r = \kec\left( \mathrm{CorrectDeferredStateRoot}(\block), \mathrm{CorrectDeferredStateRoot}\big(\parentf(\block)\big), \mathrm{CorrectDeferredStateRoot}(\parentf^{(2)}\big(\block)\big) \right)
 	\end{align}
-	where $\mathrm{CorrectDeferredStateRoot}(\cdot)$ is the function that returns the correct value of the deferred state root, 
-	which is a $256$-bit Keccak hash, that should be filled in the given block.
-	Note that 1) $\rlp$ serialization is not used in the vector since each element has fixed length,
-	and 2) the vector length only depends on the {\bf blame} field, regardless of correctness of individual fields in  blamed blocks.
-	Similar rules apply to  {\bf deferredReceiptsRoot} and {\bf deferredLogsBloomHash}, i.e. $\head(\block)_e$ and $\head(\block)_b$.
+	
+	其中 $\mathrm{CorrectDeferredStateRoot}(\cdot)$ 是返回延迟状态根正确值的 $256$ 比特 Keccak 哈希函数，它将被
+	fill in
+	填入给定的区块。
+	%where $\mathrm{CorrectDeferredStateRoot}(\cdot)$ is the function that returns the correct value of the deferred state root, 
+	%which is a $256$-bit Keccak hash, that should be filled in the given block.
+	
+	请注意，1) 因为每个元素都有固定长度，向量没有使用 $\rlp$ 序列化。 
+	%Note that 1) $\rlp$ serialization is not used in the vector since each element has fixed length,
+	以及 2) 向量长度仅依赖于 {\bf blame} 域，与被 \emph{blame} 的区块
+	individual fields
+	独立域值的正确性无关。
+	%and 2) the vector length only depends on the {\bf blame} field, regardless of correctness of individual fields in  blamed blocks.
+	类似的规则也应用于 {\bf 延迟收据根哈希} 和 {\bf 延迟日志过滤器哈希}，即 $\head(\block)_e$ 和 $\head(\block)_b$。
+	%Similar rules apply to  {\bf deferredReceiptsRoot} and {\bf deferredLogsBloomHash}, i.e. $\head(\block)_e$ and $\head(\block)_b$.
 
