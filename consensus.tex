@@ -2,11 +2,20 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Consensus}
+\section{共识}
+%\section{Consensus}
 
-The consensus rules in {\name} are designed to make decision on two questions: the first is that whether a block is valid and should be added to the {\name} blockchain; the other is that in what order those valid blocks should be processed.   
+{\name} 的共识规则旨在决定以下两个问题：
+首先，判断一个区块是否合法并应被加入 {\name} 的区块链；
+其次，应以怎样的顺序处理那些合法的区块。   
+%The consensus rules in {\name} are designed to make decision on two questions: the first is that whether a block is valid and should be added to the {\name} blockchain; the other is that in what order those valid blocks should be processed.   
 
-In an overview, the \name consensus protocol optimistically accepts all formally correct blocks and organizes them as a \tg (instead of a tree or a chain), and then specifies a total order of blocks in the \tg following the \oldversion{Conflux consensus rules in \cite{Conflux}} \newversion{GHAST rule}.
+总而言之，{\name} 共识协议将乐观地接受所有形式上符合规定的区块，并将它们排列为\tg 结构（而非树状结构或链状结构），
+In an overview, the \name consensus protocol optimistically accepts all formally correct blocks and organizes them as a \tg (instead of a tree or a chain), 
+然后再依据 {\name} 共识规则 \cite{Conflux} 再对区块进行全排序。
+该顺序将在所有诚实用户中达成共识，并且（在合理的安全性假设下）很难被篡改。
+一旦区块的全序关系被敲定下来，就可以按照此顺序依次执行区块中的有效交易，并在执行的过程中忽略和抛弃与之前交易重复或冲突的非法交易。
+and then specifies a total order of blocks in the \tg following the \oldversion{Conflux consensus rules in \cite{Conflux}} \newversion{GHAST rule}.
 This total order will be agreed by all honest participants and it is hard to change (under reasonable assumptions). 
 After fixing such an order, transactions inside blocks are executed accordingly, and invalid transactions, which can be duplicating or conflicting previously processed transactions, are ignored.
 
