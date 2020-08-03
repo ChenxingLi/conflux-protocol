@@ -784,39 +784,47 @@ $R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
 	%as discussed in Section~\ref{sec:blaming} and Section~\ref{sec:incentive}.
 }
 
-\subsubsection{Partially (In)Valid Blocks}
+\subsubsection{部分（不）合法区块}
+%\subsubsection{Partially (In)Valid Blocks}
 \label{sec:pvalid header}
 
-We call a block $\block$ \emph{partially valid} if 
-\newversion{either $\parent{\block}$ is marked as partially valid or} 
-its header $\head=\head(\block)$ passes all the assertions as in Section~\ref{sec:valid header} except for the following:
-\begin{itemize}
-	\oldversion{\item the deferred state root $\head_r$ is incorrect;}
 
-	\oldversion{\item the parent reference $\parent{\block}$ specified by $\block_{\head_p}$ is not chosen by the GHOST rule in $\past(\block)$.}
+若一个区块 $\block$ 的父区块 $\parent{\block}$ 被标记为部分合法，或该区块自身的区块头 $\head=\head(\block)$ 满足第 \ref{sec:valid header} 中以下除外的所有条件，我们称其为 \emph{部分合法} 的：
+%We call a block $\block$ \emph{partially valid} if 
+%\newversion{either $\parent{\block}$ is marked as partially valid or} 
+%its header $\head=\head(\block)$ passes all the assertions as in Section~\ref{sec:valid header} except for the following:
+\begin{itemize}
+	%\oldversion{\item the deferred state root $\head_r$ is incorrect;}
+
+	%\oldversion{\item the parent reference $\parent{\block}$ specified by $\block_{\head_p}$ is not chosen by the GHOST rule in $\past(\block)$.}
 
 	\newversion{
-	\item the parent reference $\parent{\block}$ specified by $\head(\block)_{p}$ is not chosen properly according to the GHAST rule in $\past(\block)$;
+	\item $\head(\block)_{p}$ 所标明的父块 $\parent{\block}$ 没有遵循 GHAST 规则选择（对 $\past(\block)$ 而言）
+	%\item the parent reference $\parent{\block}$ specified by $\head(\block)_{p}$ is not chosen properly according to the GHAST rule in $\past(\block)$;
 
+	\item 自适应权重标志 $\head(\block)_{w}$ 没有根据 GHAST 规则正确设置（对 $\past(\block)$ 而言）
+	%\item the adaptive weight flag $\head(\block)_{w}$ is not set properly according to the GHAST rule in $\past(\block)$;
 
-	\item the adaptive weight flag $\head(\block)_{w}$ is not set properly according to the GHAST rule in $\past(\block)$;
-
-
-	\item the target difficulty $\head(\block)_{d}$ satisfies the threshold condition of difficulty adjustment but it is not calculated properly according to the GHAST difficulty adjusting function.}
+	\item 目标难度 $\head(\block)_{d}$ 满足了难度调整的阈值条件，但没有按照 GHAST 难度调整函数被正确计算。
+	%\item the target difficulty $\head(\block)_{d}$ satisfies the threshold condition of difficulty adjustment but it is not calculated properly according to the GHAST difficulty adjusting function.}
 \end{itemize}
 
 
+一个部分合法区块在其发布后的几小时内不能被诚实区块引用。
+%A partially valid block may not be referenced by honest blocks in several hours after it is released.
+当一个区块变老并不再能影响枢轴链时，我们不关心该区块是否为部分合法。详情请见第 \ref{sec:block validate} 节。 
+%When a block becomes old and loses the ability to influence the pivot chain, we do not care about whether a block is partially valid or not. See Section~\ref{sec:block validate} for details. 
+在一个部分合法区块被确认后，除了 timer 链的决定（见第 \ref{sec:timer chain}），它将被当成一个完全合法区块对待。
+%Once a partially valid block is accepted, then it is treated as a fully valid block except for the decision of timer chain (Section~\ref{sec:timer chain}).
 
-A partially valid block may not be referenced by honest blocks in several hours after it is released. 
-When a block becomes old and loses the ability to influence the pivot chain, we do not care about whether a block is partially valid or not. See Section~\ref{sec:block validate} for details. 
-Once a partially valid block is accepted, then it is treated as a fully valid block except for the decision of timer chain (Section~\ref{sec:timer chain}).
 
-
-We note that as long as the target difficulty is legitimate and the proof of work is valid,
-the partially valid block can still contribute to the throughput.
-This is because we allow referencing partially valid blocks and the transactions inside will be processed as in any fully valid block.
+只要目标难度和工作量证明是合理的，部分合法区块仍可以对系统的吞吐率产生贡献。
+%We note that as long as the target difficulty is legitimate and the proof of work is valid, the partially valid block can still contribute to the throughput.
+这是因为我们允许引用部分合法区块，其所含的交易因此将和在完全合法区块中一样被正常处理和执行。
+%This is because we allow referencing partially valid blocks and the transactions inside will be processed as in any fully valid block.
 % 
-We further remark that since the producer of a partially valid block is entitled to no reward, transaction fees may be burnt in case these transactions are only collected in partially valid blocks.
+需要特别注意的是，因为部分合法区块的挖掘者将得不到任何奖励，若交易仅被打包在部分合法区块，其交易费有可能被烧掉。
+%We further remark that since the producer of a partially valid block is entitled to no reward, transaction fees may be burnt in case these transactions are only collected in partially valid blocks.
 
 
 
