@@ -798,7 +798,7 @@ $R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
 
 	%\oldversion{\item the parent reference $\parent{\block}$ specified by $\block_{\head_p}$ is not chosen by the GHOST rule in $\past(\block)$.}
 
-	\newversion{
+	
 	\item $\head(\block)_{p}$ 所标明的父块 $\parent{\block}$ 没有遵循 GHAST 规则选择（对 $\past(\block)$ 而言）
 	%\item the parent reference $\parent{\block}$ specified by $\head(\block)_{p}$ is not chosen properly according to the GHAST rule in $\past(\block)$;
 
@@ -814,7 +814,7 @@ $R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
 %A partially valid block may not be referenced by honest blocks in several hours after it is released.
 当一个区块变老并不再能影响枢轴链时，我们不关心该区块是否为部分合法。详情请见第 \ref{sec:block validate} 节。 
 %When a block becomes old and loses the ability to influence the pivot chain, we do not care about whether a block is partially valid or not. See Section~\ref{sec:block validate} for details. 
-在一个部分合法区块被确认后，除了 timer 链的决定（见第 \ref{sec:timer chain}），它将被当成一个完全合法区块对待。
+在一个部分合法区块被确认后，除了时钟链的决定（见第 \ref{sec:timer chain}），它将被当成一个完全合法区块对待。
 %Once a partially valid block is accepted, then it is treated as a fully valid block except for the decision of timer chain (Section~\ref{sec:timer chain}).
 
 
@@ -853,42 +853,42 @@ $R_{\bf i}$ 和 $R_{\bf o}$ 的设置相同。
 
 	那么，对于当下区块 $\block$ 而言，在 $\block$ 和 $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ 之间的所有区块，即 $\parentf(\block), \cdots, \parentf^{\left(\head(\block)_{m}\right)}(\block)$，
 	都提交了错误状态。
-	我们称这些区块被 $\block$ （直接） \emph{blame}。
+	我们称这些区块被 $\block$ （直接） 投反对票 （即 \emph{blame}）。
 	%Then, in the current block $\block$'s view, all blocks in between of $\block$ and $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$, i.e. $\parentf(\block), \cdots, \parentf^{\left(\head(\block)_{m}\right)}(\block)$, are committing to incorrect states, for which we say that those blocks are (directly) \emph{blamed} by $\block$.
 	
 	此外，因为 $\block$ 认可 $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ 提交的系统状态，
 	%Furthermore, since $\block$ agrees with the state committed in $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$,
-	被 $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ 所 \emph{blame} 的区块将同样被 $\block$ （间接地） \emph{blame}。
+	被 $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ 所 投反对票 的区块将同样被 $\block$ （间接地） 投反对票。
 	%the blocks blamed by  $\parentf^{\left(\head(\block)_{m}+1\right)}(\block)$ is also (indirectly) blamed by $\block$, 
-	从而我们递归地确定在 $\chain(\block)$ 上的所有被最新区块 $\block$ \emph{blame} 的区块。
+	从而我们递归地确定在 $\chain(\block)$ 上的所有被最新区块 $\block$ 投反对票 的区块。
 	%and recursively we can determine all the blocks on $\chain(\block)$ that are blamed by the newest block $\block$.
 
 	对于 $\chain(\block)$ （即 $\block$ 合法时 $\past(\block)$ 中的枢轴链）以外的区块，
 	%For blocks off $\chain(\block)$ (which is indeed the pivot chain in $\past(\block)$ as long as $\block$ is valid), 
-	我们进行一个最大努力测试来决定其是否被 $\block$ \emph{blame}。
+	我们进行一个最大努力测试来决定其是否被 $\block$ 投反对票。
 	%we do a best effort test to decide whether they are blamed by $\block$.
-	更确切地说，每个区块 $\block'$ 都确定了一组被 $\block'$ 沿着 $\chain(\block')$ 所 \emph{blame} 的区块。
+	更确切地说，每个区块 $\block'$ 都确定了一组被 $\block'$ 沿着 $\chain(\block')$ 所 投反对票 的区块。
 	%More precisely, every block $\block'$ must have determined a set of blocks blamed by $\block'$ along $\chain(\block')$,
 	
-	若两者没有在交集 $\chain(\block)\bigcap\chain(\block')$ 中被 blame 的区块集合上达到完全一致，则 $\block'$ 将被 $\block$ \emph{blame}。
+	若两者没有在交集 $\chain(\block)\bigcap\chain(\block')$ 中被投反对票的区块集合上达到完全一致，则 $\block'$ 将被 $\block$ 投反对票。
 	%and $\block'$ is blamed by $\block$ if they do not agree on exactly the same set of blamed blocks in the intersection $\chain(\block)\bigcap\chain(\block')$.
 	
 	除此外，只要 $\block'$ 不位于当下的枢轴链上，我们对 $\block'$ 与执行相关的域 $\block'_r,\block'_e,\block'_b$ 将不进行其他检查。
 	%We remark that no further check is applied on the execution related fields $\block'_r,\block'_e,\block'_b$ of $\block'$ as long as $\block'$ is off the current pivot chain.
 
-	因此，我们确定了每个区块 $\block'$ 是否被任意其他区块 \emph{blame}。
+	因此，我们确定了每个区块 $\block'$ 是否被任意其他区块 投反对票。
 	%Thus we have determined for every block $\block'$ whether it is blamed by any other block $\block$.
-	对被 \emph{blame} 的区块（明确来说，被枢轴链上最后一个区块所 \emph{blame} 的区块）的惩罚在第 \ref{sec:incentive} 节中有具体说明。
+	对被 投反对票 的区块（明确来说，被枢轴链上最后一个区块所 投反对票 的区块）的惩罚在第 \ref{sec:incentive} 节中有具体说明。
 	%The punishment for blamed blocks (in particular, those blamed by the latest block on the pivot chain) is specified in Section~\ref{sec:incentive}.
 
 	此外，状态承诺域，即 {\bf 延迟状态根哈希}, {\bf 延迟收据根哈希}, {\bf 延迟日志过滤器哈希},
 	%In addition, the fields of state commitments, i.e. {\bf deferredStateRoot}, {\bf deferredReceiptsRoot}, {\bf deferredLogsBloomHash}, 
-	当被 \emph{blame} 时将以不同方式处理，同第 \ref{sec:block} 节开头所简单描述的一样。
+	当被 投反对票 时将以不同方式处理，同第 \ref{sec:block} 节开头所简单描述的一样。
 	%would be handled differently when being blamed, as briefly described at the beginning of Section~\ref{sec:block}.
-	即，若 $\head_m>0$ 且状态承诺域被 \emph{blame}，那么该承诺将是一个由正确承诺组成的向量的 Keccak 哈希。
+	即，若 $\head_m>0$ 且状态承诺域被 投反对票，那么该承诺将是一个由正确承诺组成的向量的 Keccak 哈希。
 	%That is, if $\head_m>0$ and the those fields are blamed, then the commitment will be a Keccak hash of the vector consisting of the correct commitments.
 	
-	例如，若对于一个区块 $\block$，$\head(\block)_m=2$ 成立，即 $\parentf(\block),\parentf^{(2)}(\block)$ 被 \emph{blame} 而 $\parentf^{(3)}(\block)$ 没有，那么区块 $\block$ 的 {\bf 延迟状态根哈希} 域 $\head(\block)_r$ 应为：
+	例如，若对于一个区块 $\block$，$\head(\block)_m=2$ 成立，即 $\parentf(\block),\parentf^{(2)}(\block)$ 被 投反对票 而 $\parentf^{(3)}(\block)$ 没有，那么区块 $\block$ 的 {\bf 延迟状态根哈希} 域 $\head(\block)_r$ 应为：
 	%For example, if a block $\block$ has $\head(\block)_m=2$ such that $\parentf(\block),\parentf^{(2)}(\block)$ are blamed but $\parentf^{(3)}(\block)$ is not, then the {\bf deferredStateRoot} field $\head(\block)_r$ of block $\block$ would be 
 	\begin{align}
 		\head(\block)_r = \kec\left( \mathrm{CorrectDeferredStateRoot}(\block), \mathrm{CorrectDeferredStateRoot}\big(\parentf(\block)\big), \mathrm{CorrectDeferredStateRoot}(\parentf^{(2)}\big(\block)\big) \right)
