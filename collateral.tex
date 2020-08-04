@@ -70,9 +70,11 @@ Conflux 采用 \emph{存储抵押} （缩写为 CFS） 机制作为存储费用�
 	k_4 &\eqdef {\sf [total\char`_storage\char`_tokens]_{\sf ch}} 
 \end{align}
 
-\subsection{Storage writing}\label{sec:storage_maintain}
+\subsection{存储写入}\label{sec:storage_maintain}
+%\subsection{Storage writing}\label{sec:storage_maintain}
 
-In order to refund the storage collateral to payer when the storage entry is released, Conflux must track the owner for each storage entry. Here we formally describe the storage writing function $\Phi(\st,a,k,v,o)$, which sets storage entry $k$ of account $a$ to value $v$ and address $o$ is the storage owner. It returns updated world-state $\st'$. 
+为了在存储项被释放时将存储抵押退回给付款人，Conflux 必须追踪每个存储项的所有者。在此我们正式定义存储写入函数 $\Phi(\st,a,k,v,o)$，它将账户 $a$ 的存储项 $k$ 的值设为 $v$，而 $o$ 表示存储项所有者的地址。函数返回更新后的世界状态 $\st'$。
+%In order to refund the storage collateral to payer when the storage entry is released, Conflux must track the owner for each storage entry. Here we formally describe the storage writing function $\Phi(\st,a,k,v,o)$, which sets storage entry $k$ of account $a$ to value $v$ and address $o$ is the storage owner. It returns updated world-state $\st'$. 
 
 \begin{align}
 	\st'   &\eqdef \st \qquad \mbox{  except:}\\ 
@@ -89,7 +91,8 @@ In order to refund the storage collateral to payer when the storage entry is rel
 	s' &\eqdef \st'[a]_{\bf s}[k] 
 \end{align}
 
-There are five special storage entries in staking vote contract $\stakingcontract$, which record the statistic information about Conflux blockchain. Their owners are always the staking vote contract and they are exempted from storage collateral. Their keys are list as follows 
+在 staking 投票合约 $\stakingcontract$ 中有五个特殊存储项，它们记录着有关 Conflux 区块链的统计信息。这些存储项的所有者始终是 staking 投票合约，且无需存储抵押。它们的键如下列所示：
+%There are five special storage entries in staking vote contract $\stakingcontract$, which record the statistic information about Conflux blockchain. Their owners are always the staking vote contract and they are exempted from storage collateral. Their keys are list as follows 
 \begin{align}
 	& \sf [accumulate\char`_interest\char`_rate]_{\sf ch} \\ 
 	& \sf [interest\char`_rate]_{\sf ch} \\
@@ -98,4 +101,5 @@ There are five special storage entries in staking vote contract $\stakingcontrac
     & \sf [total\char`_issued\char`_tokens]_{\sf ch} 
 \end{align}
 
-These five storage entries can only be accessed by the internal contract. In this document, we don't use function $\Phi$ when dealing with these entries and thus function $\Phi$ does not need to consider this special case. 
+这五个存储项只能被内部合约访问。在这个文档中，我们不使用函数 $\Phi$ 来处理这些存储项。因此函数 $\Phi$ 无需考虑这些特殊情况。
+%These five storage entries can only be accessed by the internal contract. In this document, we don't use function $\Phi$ when dealing with these entries and thus function $\Phi$ does not need to consider this special case. 
