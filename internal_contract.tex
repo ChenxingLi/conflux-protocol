@@ -1,34 +1,50 @@
 % !TEX root=./tech-specification.tex
-\section{Internal Contracts}
+\section{内部合约}
+%\section{Internal Contracts}
 \label{sec:internal}
-\name introduces several built-in internal contracts for better system maintenance and on-chain governance.
+为了更好的系统维护和链上管理，\name 采用数个内置的内部合约。
+%\name introduces several built-in internal contracts for better system maintenance and on-chain governance.
 %
-They provide solidity-like interface for developers. The interface list and their gas consumptions are list in section~\ref{sec:internal_gas}. Section~\ref{sec:internal_contract} formally describes the behavior of internal contracts. In this section, we introduce the high-level design of internal contracts. 
+
+这些内部合约为开发人员提供与 Solidity 类似的交互界面。第 \ref{sec:internal_gas} 节中写明了介面列表和燃料消耗。第 \ref{sec:internal_contract} 节正式地定义了内部合约的性能。在本节中，我们将介绍内部的高层设计。
+%They provide solidity-like interface for developers. The interface list and their gas consumptions are list in section~\ref{sec:internal_gas}. Section~\ref{sec:internal_contract} formally describes the behavior of internal contracts. In this section, we introduce the high-level design of internal contracts. 
 
 
-\subsection{Sponsorship for Usage of Contracts}
+\subsection{交易费代付}
+%\subsection{Sponsorship for Usage of Contracts}
 \label{sec:sponsor}
 
-\name implements a sponsorship mechanism to subsidize the usage of smart contracts. 
-Thus, a new account with zero balance is able to call smart contracts as long as the execution is sponsored (usually by the operator of Dapps).
-The built-in \emph{SponsorControl Contract} is introduced to record the sponsorship information of smart contracts.
+\name 实施一个赞助机制为智能合约的使用提供补助。
+%\name implements a sponsorship mechanism to subsidize the usage of smart contracts. 
+因此，如果执行得到赞助（通常由 Dapps 的操作者赞助），一个余额为零的新账户就能够调用合约。
+%Thus, a new account with zero balance is able to call smart contracts as long as the execution is sponsored (usually by the operator of Dapps).
+为记录智能合约的赞助信息，我们采用内置的 \emph{赞助管理合约}。 
+%The built-in \emph{SponsorControl Contract} is introduced to record the sponsorship information of smart contracts.
 
-The SponsorControl contract keeps the {\bf SponsorInfo} information for each user-established contract $\contract$. The {\bf SponsorInfo} contains the following fields. 
+\emph{赞助管理合约} 追踪每个由用户创建的合约 $\contract$ 的 {\bf 资助信息}，该信息包含以下域：
+%The SponsorControl contract keeps the {\bf SponsorInfo} information for each user-established contract $\contract$. The {\bf SponsorInfo} contains the following fields. 
 \begin{itemize}[nosep]
-	\item {\bf sponsor for gas}: this is the account that provides the subsidy for gas consumption;
+	\item {\bf 燃料资助人（sponsor for gas）}: 这是为燃料消耗提供补助的账户
+	%\item {\bf sponsor for gas}: this is the account that provides the subsidy for gas consumption;
 
-	\item {\bf sponsor for collateral}: this is the account that provides the subsidy for collateral for storage; 
+	\item {\bf 存储抵押资助人}: 这是为存储抵押提供补助的账户
+	%\item {\bf sponsor for collateral}: this is the account that provides the subsidy for collateral for storage; 
 
-	\item {\bf sponsor balance for gas}: this is the balance of subsidy available for gas consumption;
+	\item {\bf 燃料资助余额}: 这是可为燃料消耗提供补助的余额
+	%\item {\bf sponsor balance for gas}: this is the balance of subsidy available for gas consumption;
 
-	\item {\bf sponsor balance for collateral}: this is the balance of subsidy available for collateral for storage;
+	\item {\bf 存储抵押资助余额}: 这是可为存储抵提供补助的余额
+	%\item {\bf sponsor balance for collateral}: this is the balance of subsidy available for collateral for storage;
 
-	\item {\bf sponsor limit for gas fee}: this is the upper bound for the gas fee subsidy paid for every sponsored transaction;
+	\item {\bf 燃料资助上限}:	这是可为每笔被赞助交易支付的燃料补助上限。
+	%\item {\bf sponsor limit for gas fee}: this is the upper bound for the gas fee subsidy paid for every sponsored transaction;
 \end{itemize}
 
-The SponsorControl contract also keeps a {\bf whitelist} for each user-established contract $\contract$, which records normal accounts that are eligible for the subsidy. A special all-zero address refers to all normal accounts. If the storage entry of SponsorControl contract with key $\contract_{addr}\cdot a$ is set to one, the address $a$ is in the whitelist of contract $\contract$.
+\emph{赞助管理合约} 同时追踪每个由用户创建的合约 $\contract$ 的 {\bf 白名单}。该名单记录有资格资助使用的普通账户。一个特殊的全零地址代表所有普通账户。若 \emph{赞助管理合约} 的存储项以 $\contract_{addr}\cdot a$ 为键，以 $1$ 为值，则地址 $a$ 在合约 $\contract$ 的白名单之中。
+%The SponsorControl contract also keeps a {\bf whitelist} for each user-established contract $\contract$, which records normal accounts that are eligible for the subsidy. A special all-zero address refers to all normal accounts. If the storage entry of SponsorControl contract with key $\contract_{addr}\cdot a$ is set to one, the address $a$ is in the whitelist of contract $\contract$.
 
-So we can check if an address $a$ is in whitelist of contract $\contract$ by
+所以，我们可以通过以下方法检查一个地址 $a$ 是否存在于合约 $\contract$ 的白名单中：
+%So we can check if an address $a$ is in whitelist of contract $\contract$ by
 \begin{align}
 	\mathsf{Whitelist}(\st,a,\contract) &\eqdef \st[a_{\sf sponsor}]_{\bf s}[\contract_{addr}\cdot a]_v \neq 0 \;\vee\; \st[a_{\sf sponsor}]_{\bf s}[\contract_{addr}\cdot y]_v \neq 0 \notag \\
 	\mbox{where:}&\notag \\
@@ -40,24 +56,34 @@ So we can check if an address $a$ is in whitelist of contract $\contract$ by
 
 % \medskip
 
-\paragraph{Sponsor for gas consumption.}
-For a contract $\contract$ with non-empty {\bf sponsor for gas} and a transaction $\tx$ calling $\contract$, 
-$\tx$ is eligible for the subsidy for gas consumption 
-if $\senderf(\tx)$ is in the \textbf{whitelist} of $\contract$
-and the gas fee specified by $\tx$ is within the limit, i.e. $\tx_p\times\tx_g \le \text{\textbf{sponsor limit for gas fee} of $\contract$}$.
-The gas consumption of $\tx$ is paid from the \textbf{sponsor balance for gas} of $\contract$ (if it is sufficient) rather than from the sender's balance,
-and the execution of $\tx$ would fail if the \textbf{sponsor balance for gas fee} cannot afford the gas consumption.
-In case the transaction specifies a gas fee (i.e. $\tx_p\times\tx_g$) greater than $\min\set{\textbf{sponsor limit for gas fee}, \textbf{sponsor balance for gas}}$, there is no subsidy and the sender $\sender{\tx}$ should pay for the gas consumption as usual.
+\paragraph{燃料消耗资助人}
+%\paragraph{Sponsor for gas consumption.}
+对一个 {\bf 燃料资助人} 域值非零的合约 $\contract$ 和调用该合约的交易 $\tx$，$\tx$ 使用燃料资助的条件为：
+1） $\senderf(\tx)$ 在 $\contract$ 的 \textbf{白名单} 中，
+2） $\tx$ 所需的燃料费在限额之内，即 $\tx_p\times\tx_g \le \text{\textbf{sponsor limit for gas fee} of $\contract$}$。
+%For a contract $\contract$ with non-empty {\bf sponsor for gas} and a transaction $\tx$ calling $\contract$, $\tx$ is eligible for the subsidy for gas consumption if $\senderf(\tx)$ is in the \textbf{whitelist} of $\contract$and the gas fee specified by $\tx$ is within the limit, i.e. $\tx_p\times\tx_g \le \text{\textbf{sponsor limit for gas fee} of $\contract$}$.
+$\tx$ 的燃料消耗将（在余额充足的前提下）从 $\contract$ 的 \textbf{燃料资助余额} 中支出，而非从交易发送方的余额中支出。
+%The gas consumption of $\tx$ is paid from the \textbf{sponsor balance for gas} of $\contract$ (if it is sufficient) rather than from the sender's balance,
+若 \textbf{燃料资助余额} 不足以支付燃料消耗，$\tx$ 的执行将失败。
+%and the execution of $\tx$ would fail if the \textbf{sponsor balance for gas} cannot afford the gas consumption.
+当交易所需燃料费（即 $\tx_p\times\tx_g$）大于 $\min\set{\textbf{sponsor limit for gas fee}，\textbf{sponsor balance for gas}}$，补贴将不被提供，而交易发送方 $\sender{\tx}$ 应负责支付燃料消耗。
+%In case the transaction specifies a gas fee (i.e. $\tx_p\times\tx_g$) greater than $\min\set{\textbf{sponsor limit for gas fee}, \textbf{sponsor balance for gas}}$, there is no subsidy and the sender $\sender{\tx}$ should pay for the gas consumption as usual.
 
-\paragraph{Sponsor for storage collateral.}
-For a contract $\contract$ with non-empty {\bf sponsor for collateral} and a transaction $\tx$ calling $\contract$,
-$\tx$ is eligible for the subsidy for storage usage if: 
-a) its {\bf sender} $\sender{\tx}$ is in the \textbf{whitelist} of $\contract$, and 
-b) its {\bf storageLimit} $\tx_\ell$ costs no more than {\bf sponsor balance for collateral} of $\contract$. 
-If $\tx$ is eligible, then the collateral for storage incurred in the execution of $\tx$ 
-is deducted from \textbf{sponsor balance for collateral} of $\contract$, 
-and the owner of those modified storage entries is set to $\contract$ accordingly.
-In case $\sender{\tx}$ is not in the \textbf{whitelist} or the \textbf{sponsor balance for collateral} cannot cover the {\bf storageLimit}, the sender $\sender{\tx}$ has to pay for storage usage from its own balance as usual.
+\paragraph{存储抵押资助人}
+%\paragraph{Sponsor for storage collateral.}
+对一个 {\bf 存储抵押资助人} 域值非零的合约 $\contract$ 和调用该合约的交易 $\tx$，
+%For a contract $\contract$ with non-empty {\bf sponsor for collateral} and a transaction $\tx$ calling $\contract$,
+满足以下条件的 $\tx$ 有资格使用存储补贴：
+1） 交易发送方 $\senderf(\tx)$ 在 $\contract$ 的 \textbf{白名单} 中，
+
+？2） 交易的 {\bf 存储上限} $\tx_\ell$ 不大于 $\contract$ 的 {\bf 存储抵押资助余额}。
+%$\tx$ is eligible for the subsidy for storage usage if: 
+%a) its {\bf sender} $\sender{\tx}$ is in the \textbf{whitelist} of $\contract$, and 
+%b) its {\bf storageLimit} $\tx_\ell$ costs no more than {\bf sponsor balance for collateral} of $\contract$. 
+若 $\tx$ 有资格使用存储补助，该交易执行过程中产生的存储抵押将从 $\contract$ 的 \textbf{存储抵押资助余额} 中扣除，且这些经过修改的存储项的所有者将被设置为 $\contract$。
+%If $\tx$ is eligible, then the collateral for storage incurred in the execution of $\tx$ is deducted from \textbf{sponsor balance for collateral} of $\contract$, and the owner of those modified storage entries is set to $\contract$ accordingly.
+若 $\sender{\tx}$ 不在 \textbf{白名单} 中或 \textbf{存储抵押资助余额} 不足以覆盖 {\bf 存储上限}， 交易发送方 $\sender{\tx}$ 将从其账户余额中支付燃料消耗。
+%In case $\sender{\tx}$ is not in the \textbf{whitelist} or the \textbf{sponsor balance for collateral} cannot cover the {\bf storageLimit}, the sender $\sender{\tx}$ has to pay for storage usage from its own balance as usual.
 
 
 \subsubsection{Sponsorship Update}
