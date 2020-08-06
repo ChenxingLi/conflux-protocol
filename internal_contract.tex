@@ -89,7 +89,7 @@ $\tx$ 的燃料消耗将（在余额充足的前提下）从 $\contract$ 的 \te
 \subsubsection{更新赞助设置}
 %\subsubsection{Sponsorship Update}
 
-燃料资助和抵押资助都可以通过调用 \bf{赞助管理合约} 进行更新。
+燃料资助和抵押资助都可以通过调用 \textbf{赞助管理合约} 进行更新。
 %Both sponsorship for gas and for collateral can be updated by calling the SponsorControl contract.
 现任资助人可以通过调用该合约直接转账至资助余额户头，
 %The current sponsors can call this contract to transfer funds to increase the sponsor balances directly,
@@ -216,16 +216,18 @@ Staking 合约中的以上两个项都要求存储抵押，而该抵押将在对
 
 
 
-\subsubsection{Interest Rate}
+\subsubsection{利息率}
+%\subsubsection{Interest Rate}
 
-The staking interest rate is currently set to \interest per year.
-% Compound interest is not implemented yet, however users may achieve it manually. 
-Compound interest is implemented in the granularity of blocks.
-% On withdrawing funds staked for less than \guangsays{three months}, a commission fee applies depending on the length of actual staking time.
-So the annualized interest rate is about \annualinterest.
+当下 Staking 利息率设在每年 \interest。
+%The staking interest rate is currently set to \interest per year.
+复利以区块为单位计算。
+%Compound interest is implemented in the granularity of blocks.
+因此，年利率大约为 \annualinterest。
+%So the annualized interest rate is about \annualinterest.
 
-When executing a transaction sent by account $\alpha$ at block $\block$ to withdraw a fund of value $v$ deposited at block $\block'$,
-the interest is calculated as follows:
+假设我们在区块 $\block$ 中执行一个由账户 $\alpha$ 发送的交易，该交易退还在区块 $\block'$ 时存入的价值为 $v$ 的款项，则利息的计算如下：
+%When executing a transaction sent by account $\alpha$ at block $\block$ to withdraw a fund of value $v$ deposited at block $\block'$, the interest is calculated as follows:
 \begin{align}
 	\text{Interest issued to $\account$} 
 	&\eqdef \left\lfloor v \times \frac{f^{(\blockno(\block))}(n)}{f^{(\blockno(\block'))}(n)} \right\rfloor- v \\ 
@@ -233,63 +235,82 @@ the interest is calculated as follows:
 	f(x) &\eqdef \left\lfloor x \times \left(1+\frac{\interest}{\blockinyear}\right)\right\rfloor \\
 	n &\eqdef \blockinyear \times 2^{80}
 \end{align}
-The interest is approximately equals to 
+利息约等于
+%The interest is approximately equals to 
 \begin{align}
 	\left(\left(1+\frac{\interest}{\blockinyear}\right)^T-1\right)\times v, 
 \end{align}
-where $T\eqdef\blockno(\block) - \blockno(\block')$ is the staking period measured by number of blocks, 
-and $\blockinyear$ is the expected number of blocks generated in $365$ days with the target block time $\blocktime$ seconds.
+其中  $T\eqdef\blockno(\block) - \blockno(\block')$ 是由区块数量衡量的 staking 周期，而 $\blockinyear$ 是 $365$ 天内生成区块数的期望值（目标区块生成时间为 $\blocktime$ 秒）。
+%where $T\eqdef\blockno(\block) - \blockno(\block')$ is the staking period measured by number of blocks, and $\blockinyear$ is the expected number of blocks generated in $365$ days with the target block time $\blocktime$ seconds.
 % 
-% The commission fee starts from $\commissionpercent\%$ and linearly decreases to $0$ after $\commissiondecayinblock$ blocks (i.e. $\commissiondecayinday$ days in expectation).
-Therefore after the withdrawal $\account$'s total amount of staking funds is decreased by $v$,
-and its balance is increased by:
+因此，在退款后 $\account$ 的 staking 款项全额减少了 $v$，而该账户余额增加了：
+%Therefore after the withdrawal $\account$'s total amount of staking funds is decreased by $v$, and its balance is increased by:
 \begin{align}
 	\Delta(\account_b) \eqdef v + \text{Interest issued to $\account$} 
 \end{align}
 
-The account $\account$ only specifies the value $v$ in its withdrawal request. 
-The withdrawal always starts from the earliest staked fund and recursively continues to the next one until the accumulative amount is sufficient.
+账户 $\account$ 仅在退款请求中明确其值 $v$。
+%The account $\account$ only specifies the value $v$ in its withdrawal request. 
+退款始终从时间最早的 staking 款项开始，依次处理每一项，直到累计数额足以支付退款。
+%The withdrawal always starts from the earliest staked fund and recursively continues to the next one until the accumulative amount is sufficient.
 
-The same interest rate applies to collateral for storage as well, but the CFS interest is issued directly to the miners as the payment for storage usage at the generation of every new block.
-More details about CFS interest issuance are specified in Section~\ref{subsec:storagefee}.
-
-
-\subsubsection{Staking for Voting Power}
-
-For decentralized governance, the staking mechanism provides a way to measure the involvement and devotion of users with the new dimension of staking age.
-
-When deciding voting power, it is fair and reasonable to take the staking time into consideration,
-rather than merely the amount of tokens.
-By relating voting power to committed staking period, the risk of being attacked is also mitigated,
-since the attacker must hold the tokens for a sufficiently long period to obtain enough voting power, which increases the cost of launching an attack.
-
-For every account $\account$, its committed staking time is recorded in the build-in staking contract in the form of 
-{\bf freezing rules},
-where each entry $(v,t)\in \N_{256}\times\N_{64}$ is a promise that the  staking balance of $\account$ must be at least $v$ \unit until the index of block in total order (e.g. $\blockno$) reaches $t$.
-A withdrawal request from $\account$ is invalid if any freezing rule is violated after fulfilling that request.
-The list of freezing rules for every account is append-only so that committed staking period cannot be canceled or shorten.
-However every single rule will eventually expire as the block number grows, e.g. the rule $(v,t)$ expires at block $\block$ with $\blockno(\block)\ge t$. 
-Expired freezing rule entries are cleared from state storage of the built-in staking contract at the next update of freezing rules of the same account.	
-
-Note that freezing rules are decoupled from specific staking funds, i.e. old funds can be withdrawn as long as the remaining staking balance is sufficient. 
-Therefore, the staking contract is allowed to maintain staked funds in a first-in-first-out manner (i.e. the earliest staked fund is also first withdrawn).
-% to minimize commission fee.
+相同的利息率也应用在存储抵押上，但 CFS 利息将在每个新区块生成时直接发放给矿工，作为使用存储的费用。
+%The same interest rate applies to collateral for storage as well, but the CFS interest is issued directly to the miners as the payment for storage usage at the generation of every new block.
+有关 CFS 利息发放的更多细节在第 \ref{subsec:storagefee} 中有所明确。
+%More details about CFS interest issuance are specified in Section~\ref{subsec:storagefee}.
 
 
-The voting power of each staked token is defined in the following table:
+\subsubsection{基于 Staking 的投票权}
+%\subsubsection{Staking for Voting Power}
+
+在去中心化管理下，staking 机制为衡量用户参与度和忠诚度提供了一个新维度 —— staking 时长。
+%For decentralized governance, the staking mechanism provides a way to measure the involvement and devotion of users with the new dimension of staking age.
+
+在决定投票权时，将 staking 时长一起纳入考虑比仅考虑代币数量更加公平合理。
+%When deciding voting power, it is fair and reasonable to take the staking time into consideration,rather than merely the amount of tokens.
+将投票权与承诺 staking 时长相关联可以减轻系统被攻击的风险，因为攻击者必须在一段足够长的时间内一直持有代币才能获得足够投票权，而这增加了发起攻击的成本。
+%By relating voting power to committed staking period, the risk of being attacked is also mitigated, since the attacker must hold the tokens for a sufficiently long period to obtain enough voting power, which increases the cost of launching an attack.
+
+每个账户 $\account$ 的承诺 staking 时长和 {\bf 冻结规则} 一致的格式被记录在内置的 staking 合约中，
+%For every account $\account$, its committed staking time is recorded in the build-in staking contract in the form of {\bf freezing rules},
+其中每一项 $(v,t)\in \N_{256}\times\N_{64}$ 代表在区块排序编号 (即 $\blockno$) 达到 $t$ 之前，$\account$ 的 staking 余额一定不少于 $v$ \unit。
+%where each entry $(v,t)\in \N_{256}\times\N_{64}$ is a promise that the  staking balance of $\account$ must be at least $v$ \unit until the index of block in total order (e.g. $\blockno$) reaches $t$.
+若退款的执行结果将违反任意冻结规则，$\account$ 的退款请求将是无效的。
+%A withdrawal request from $\account$ is invalid if any freezing rule is violated after fulfilling that request.
+每个账户的冻结规则列表仅允许追加，如此一来承诺 staking 时长不能被取消或缩短。
+%The list of freezing rules for every account is append-only so that committed staking period cannot be canceled or shorten.
+但是每一条规则终将随区块号码的增长而过期，即规则 $(v,t)$ 在满足 $\blockno(\block)\ge t$ 的区块 $\block$ 过期。
+%However every single rule will eventually expire as the block number grows, e.g. the rule $(v,t)$ expires at block $\block$ with $\blockno(\block)\ge t$. 
+过期的冻结规则项将在该账户冻结规则的下一次更新时，从内置 staking 合约的状态存储中被清除。
+%Expired freezing rule entries are cleared from state storage of the built-in staking contract at the next update of freezing rules of the same account.	
+
+注意，冻结规则和具体的 staking 款项是分离的，即只要剩余 staking 余额充足，原有款项就可被退还。
+%Note that freezing rules are decoupled from specific staking funds, i.e. old funds can be withdrawn as long as the remaining staking balance is sufficient. 
+因此，staking 合约可以先进先出的规则维持 staking 款项（即最早的 staking 款项也是第一个被退还的）。
+%Therefore, the staking contract is allowed to maintain staked funds in a first-in-first-out manner (i.e. the earliest staked fund is also first withdrawn).
+
+
+每个 staking 代币的投票权定义如下：
+%The voting power of each staked token is defined in the following table:
 
 \par
 \begin{center}
 \begin{tabular}{ll}
 \toprule
-Remaining Committed Staking Time & Voting Power \\
+剩余承诺 Staking 时间 & 投票权 \\
+%Remaining Committed Staking Time & Voting Power \\
 \midrule
-One year or more (i.e. $\ge \blockinyear$ blocks) & $1$  \\
-Six months to one year ($\ge 31536000$ but $<63072000$ blocks) & $0.5$ \\
-Three to six months ($\ge 15768000$ but $<31536000$ blocks) & $0.25$\\
-Less than three month (i.e. $< 15768000$ blocks) & $0$ \\
+大于一年 (即 $\ge \blockinyear$ 个区块) & $1$  \\
+%One year or more (i.e. $\ge \blockinyear$ blocks) & $1$  \\
+六个月至一年 ($\ge 31536000$ 但 $<63072000$ 个区块) & $0.5$ \\
+%Six months to one year ($\ge 31536000$ but $<63072000$ blocks) & $0.5$ \\
+三个月到六个月 ($\ge 15768000$ 但 $<31536000$ 个区块) & $0.25$\\
+%Three to six months ($\ge 15768000$ but $<31536000$ blocks) & $0.25$\\
+小于三个月 (即 $< 15768000$ 个区块) & $0$ \\
+%Less than three month (i.e. $< 15768000$ blocks) & $0$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 \par
-Therefore the total voting power of each account can be easily calculated from its freezing rules as recorded in the staking contract.
+因此，每个账户所有的投票权能从记录在 staking 合约内的冻结规则简单计算得到。
+%Therefore the total voting power of each account can be easily calculated from its freezing rules as recorded in the staking contract.
