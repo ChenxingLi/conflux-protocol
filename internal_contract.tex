@@ -86,93 +86,133 @@ $\tx$ 的燃料消耗将（在余额充足的前提下）从 $\contract$ 的 \te
 %In case $\sender{\tx}$ is not in the \textbf{whitelist} or the \textbf{sponsor balance for collateral} cannot cover the {\bf storageLimit}, the sender $\sender{\tx}$ has to pay for storage usage from its own balance as usual.
 
 
-\subsubsection{Sponsorship Update}
+\subsubsection{更新赞助设置}
+%\subsubsection{Sponsorship Update}
 
-Both sponsorship for gas and for collateral can be updated by calling the SponsorControl contract.
-The current sponsors can call this contract to transfer funds to increase the sponsor balances directly,
-and the current sponsor for gas is also allowed to increase the \textbf{sponsor limit for gas} without transferring new funds.
-Other normal accounts can replace the current sponsors by calling this contract and providing more funds for sponsorship.
-
-
-
-To replace the \textbf{sponsor for gas} of a contract $\contract$, the new sponsor should transfer to $\contract$ a fund more than the current \textbf{sponsor balance for gas} of $\contract$ and set a new value for \textbf{sponsor limit for gas fee}.
-The new value of \textbf{sponsor limit for gas fee} should be no less than the old sponsor's limit  
-unless the old \textbf{sponsor balance for gas} cannot afford the old limit.
-Moreover, the transferred fund should be $\ge 1000$ times of the new limit, so that it is sufficient to subsidize at least $1000$  transactions calling $\contract$. 
-If the above conditions are satisfied, the remaining \textbf{sponsor balance for gas} will be refunded to the old \textbf{sponsor for gas},
-and then \textbf{sponsor balance for gas}, \textbf{sponsor for gas} and \textbf{sponsor limit for gas fee} will be updated according to the new sponsor's specification.
+燃料资助和抵押资助都可以通过调用 \bf{赞助管理合约} 进行更新。
+%Both sponsorship for gas and for collateral can be updated by calling the SponsorControl contract.
+现任资助人可以通过调用该合约直接转账至资助余额户头，
+%The current sponsors can call this contract to transfer funds to increase the sponsor balances directly,
+且现任燃料资助人无需转账即可提高 \textbf{燃料资助上限}。
+%and the current sponsor for gas is also allowed to increase the \textbf{sponsor limit for gas} without transferring new funds.
+其他普通账户可以通过调用该合约来替换现任资助人，并提供更多资助金。
+%Other normal accounts can replace the current sponsors by calling this contract and providing more funds for sponsorship.
 
 
-The replacement of \textbf{sponsor for collateral} is similar except that there is no analog of the limit for gas fee.
-The new sponsor should transfer to $\contract$ a fund more than the fund provided by the current \textbf{sponsor for collateral} of $\contract$.
-Then the current \textbf{sponsor for collateral} will be fully refunded, i.e. the sum of \textbf{sponsor balance for collateral} and $\cfs(\contract)$,
-and both collateral sponsorship fields are changed as the new sponsor's request accordingly.
-Note that the contract $\contract$ is the owner of subsidized storage entries, so that the replacement of sponsorship for collateral will not affect ownership of existing storage entries.
 
-\paragraph{Note:} A contract account is also allowed to be a sponsor.
-Therefore it is possible that the sponsoring contract may be destructed before its sponsorship is replaced,
-in which case the receiver of sponsorship refund will be an already-destructed contract.
-Since the balance of such a contract is not operable (unless there is collision of $\kec$),
-it is meaningless to record that number in state and hence the refund will be burnt immediately.
+为替换合约 $\contract$ 的 \textbf{燃料资助人}，新资助人应该将一笔多于 $\contract$ 现有 \textbf{燃料资助余额} 的资金转账到 $\contract$ 中，并设置一个新的 \textbf{燃料资助上限}。
+%To replace the \textbf{sponsor for gas} of a contract $\contract$, the new sponsor should transfer to $\contract$ a fund more than the current \textbf{sponsor balance for gas} of $\contract$ and set a new value for \textbf{sponsor limit for gas fee}.
+新设置的 \textbf{燃料资助上限} 应不小于其原值，
+%The new value of \textbf{sponsor limit for gas fee} should be no less than the old sponsor's limit  
+除非原有的 \textbf{燃料资助余额} 不足以支付原有上限。
+%unless the old \textbf{sponsor balance for gas} cannot afford the old limit.
+此外，为补贴至少 $1000$ 笔调用 $\contract$ 的交易，转账金额应大于新上限的 $1000$ 倍。
+%Moreover, the transferred fund should be $\ge 1000$ times of the new limit, so that it is sufficient to subsidize at least $1000$  transactions calling $\contract$. 
+若满足了上述条件，当前剩余的 \textbf{燃料资助余额} 将被退还给原 \textbf{燃料资助人}，
+%If the above conditions are satisfied, the remaining \textbf{sponsor balance for gas} will be refunded to the old \textbf{sponsor for gas},
+而 \textbf{燃料资助余额}, \textbf{燃料资助人} and \textbf{燃料资助上限} 将根据新资助人所明确的信息更新。
+%and then \textbf{sponsor balance for gas}, \textbf{sponsor for gas} and \textbf{sponsor limit for gas fee} will be updated according to the new sponsor's specification.
 
 
-\subsection{Admin Management}
+\textbf{存储抵押资助人} 的替换使用类似的操作，除了其下没有燃料资助上限的类似项。
+%The replacement of \textbf{sponsor for collateral} is similar except that there is no analog of the limit for gas fee.
+新资助人应将一笔资金将转账到 $\contract$ 中，且该资金需多于 $\contract$ 现有 \textbf{存储抵押资助人} 所提供的资金。
+%The new sponsor should transfer to $\contract$ a fund more than the fund provided by the current \textbf{sponsor for collateral} of $\contract$.
+那么，现有 \textbf{存储抵押资助人} 将被全额退款，包含 \textbf{存储抵押资助余额} 的全额和 $\cfs(\contract)$。
+%Then the current \textbf{sponsor for collateral} will be fully refunded, i.e. the sum of \textbf{sponsor balance for collateral} and $\cfs(\contract)$,
+而存储抵押资助的相关域将根据新资助人的要求更改。
+%and both collateral sponsorship fields are changed as the new sponsor's request accordingly.
+注意，合约 $\contract$ 是接受补助的存储项的所有者，因此存储抵押资助人的替换将不影响现有存储项的所有权。
+%Note that the contract $\contract$ is the owner of subsidized storage entries, so that the replacement of sponsorship for collateral will not affect ownership of existing storage entries.
+
+\paragraph{注:} 一个合约账户也可能成为资助人。
+%\paragraph{Note:} A contract account is also allowed to be a sponsor.
+因此，在资助人更换之前，作为资助人的合约可能被销毁。这种情况下，资助金退款的接收方将是一个已被销毁的合约。
+%Therefore it is possible that the sponsoring contract may be destructed before its sponsorship is replaced, in which case the receiver of sponsorship refund will be an already-destructed contract.
+因为被销毁合约的余额无法支撑运作（除非存在 $\kec$ 的碰撞），在世界状态中记录该数字将毫无意义，因此退款将被立刻烧毁。
+%Since the balance of such a contract is not operable (unless there is collision of $\kec$), it is meaningless to record that number in state and hence the refund will be burnt immediately.
+
+
+\subsection{管理员控制台}
+%\subsection{Admin Management}
 \label{sec:admin}
 
-The \emph{AdminControl Contract} is introduced for better maintenance of other smart contracts, espeically which are generated tentatively without a proper destruction routine:
-it records the administrator of every user-established smart contract and handles the destruction on request of corresponding administrators.
+我们采用 \emph{管理员控制台合约} 以更好地维护其他（尤其是没有销毁程序的）智能合约：
+%The \emph{AdminControl Contract} is introduced for better maintenance of other smart contracts, espeically which are generated tentatively without a proper destruction routine:
+该合约记录每个由用户创建的智能合约的管理员，并应管理员请求对合约实行销毁。
+%it records the administrator of every user-established smart contract and handles the destruction on request of corresponding administrators.
 
-The default administrator of a smart contract $\contract$ is the  creator of $\contract$, i.e. the sender $\account$ of the transaction that causes the creation of $\contract$.
-The current administrator of a smart contract can transfer its authority to another \emph{normal account} by sending a request to the AdminControl contract.
-Contract accounts are not allowed to be the administrator of other contracts,
-since this mechanism is mainly for tentative maintenance.
-Any long term administration with customized authorization rules should be implemented inside the contract,
-i.e. as a specific function that handles destruction requests.
+合约 $\contract$ 的默认管理员是该合约的创建者，即创建 $\contract$ 的交易的发送方 $\account$。
+%The default administrator of a smart contract $\contract$ is the  creator of $\contract$, i.e. the sender $\account$ of the transaction that causes the creation of $\contract$.
+智能合约的现任管理员可以通过向 \emph{管理员控制台合约} 发送请求，将其权限转给另一个 \emph{普通账户}。
+%The current administrator of a smart contract can transfer its authority to another \emph{normal account} by sending a request to the AdminControl contract.
+合约账户不能成为其他合约的管理员，因为该机制主要为不正确的合约代码而设（作为管理员的合约账户可能有相同问题而导致该机制失效）。
+%Contract accounts are not allowed to be the administrator of other contracts, since this mechanism is mainly for tentative maintenance.
+任何涉及自定义授权规则的长期管理应当被植入在合约内，即作为一个管理销毁请求的特殊函数。
+%Any long term administration with customized authorization rules should be implemented inside the contract, i.e. as a specific function that handles destruction requests.
 
-At any time, the administrator $\account$ of an existing contract $\contract$ has the right to request destruction of $\contract$ by calling AdminControl.
-However, the request would be rejected if the collateral for storage of contract $\contract$ is not zero, i.e. $\cfs(\contract)>0$, or $\account$ is not the current administrator of $\contract$.
-If $\account$ is the current administrator of $\contract$ and $\cfs(\contract)=0$, then the destruction request is accepted and processed as follows:
+在任意时刻，现有合约 $\contract$ 的管理员 $\account$ 有权力通过调用 \emph{管理员控制台合约} 请求销毁 $\contract$。
+%At any time, the administrator $\account$ of an existing contract $\contract$ has the right to request destruction of $\contract$ by calling AdminControl.
+但是，若合约 $\contract$ 的存储抵押不为零，即 $\cfs(\contract)>0$，或 $\account$ 不是 $\contract$ 的现任管理员，销毁请求将被拒绝。
+%However, the request would be rejected if the collateral for storage of contract $\contract$ is not zero, i.e. $\cfs(\contract)>0$, or $\account$ is not the current administrator of $\contract$.
+若 $\account$ 是 $\contract$ 的现任管理员且 $\cfs(\contract)=0$，则销毁请求将被同意并运行如下：
+%If $\account$ is the current administrator of $\contract$ and $\cfs(\contract)=0$, then the destruction request is accepted and processed as follows:
 \begin{enumerate}[nosep]
- 	\item the balance of $\contract$ will be refunded to $\account$; 
+ 	\item $\contract$ 的余额将被退还至 $\account$；
+ 	%\item the balance of $\contract$ will be refunded to $\account$; 
 
-	\item the \textbf{sponsor balance for gas} of $\contract$ will be refunded to \textbf{sponsor for gas};
+	\item $\contract$ 的 \textbf{燃料资助余额} 将被退款给 \textbf{燃料资助人}；
+	%\item the \textbf{sponsor balance for gas} of $\contract$ will be refunded to \textbf{sponsor for gas};
 
-	\item the \textbf{sponsor balance for collateral} of $\contract$ will be refunded to \textbf{sponsor for collateral};
+	\item $\contract$ 的 \textbf{存储抵押资助余额} 将被退款给 \textbf{存储抵押资助人}；
+	%\item the \textbf{sponsor balance for collateral} of $\contract$ will be refunded to \textbf{sponsor for collateral};
 
-	\item the internal state in $\contract$ will be released and the corresponding collateral for storage refunded to owners;
+	\item $\contract$ 的内部状态将被释放，而其对应的存储抵押将被退还给所有者；
+	%\item the internal state in $\contract$ will be released and the corresponding collateral for storage refunded to owners;
 
-	\item the contract $\contract$ is deleted from world-state.
+	\item 合约 $\contract$ 将从世界状态中被删除。
+	%\item the contract $\contract$ is deleted from world-state.
 \end{enumerate} 
 
-The administrator of contract $a$ is stored in account component $a_a$. 
+合约 $a$ 的管理员被存储在账户组成部分 $a_a$ 中。
+%The administrator of contract $a$ is stored in account component $a_a$. 
 
-\subsection{Staking Mechanism}
+\subsection{Staking 机制}
+%\subsection{Staking Mechanism}
 \label{sec:staking}
 
-\name introduces the staking mechanism for two reasons:
-first, staking mechanism provides a better way to charge the occupation of storage space (comparing to ``pay once, occupy forever'');
-and second, this mechanism also helps in defining the voting power in decentralized governance.
+\name 为以下两个原因启用 staking 机制：
+%\name introduces the staking mechanism for two reasons:
+首先，staking 机制为使用存储空间提供（与一次性支付相比）更好的收费方式；
+%first, staking mechanism provides a better way to charge the occupation of storage space (comparing to ``pay once, occupy forever'');
+其次，此机制协助定义了去中心化管理下的投票权。
+%and second, this mechanism also helps in defining the voting power in decentralized governance.
 
-At a high level, \name implements a built-in \emph{Staking Contract} 
+\name 在高层内置了一个 \emph{Staking 合约} 来记录所有账户的 staking 信息。
+%At a high level, \name implements a built-in \emph{Staking Contract} 
 % (at address $\stakingcontract$) 
-to record the staking information of all accounts.
-By sending a transaction to this contract, 
-users (both external users and smart contracts) can deposit/withdraw funds, which is also called \emph{stakes} in the contract.
-The interest of staked funds is issued at withdrawal, 
-and depends on both the amount and staking period of the fund being withdrawn. 
+%to record the staking information of all accounts.
+通过发送交易到这个合约，用户（外部用户和智能合约）可以存储或退还款项，该款项即合约中所称的 \emph{stakes}。
+%By sending a transaction to this contract, users (both external users and smart contracts) can deposit/withdraw funds, which is also called \emph{stakes} in the contract.
+用于 staking 的款项的利息将在退还款项时发放，该利息取决于被退还款项的 staking 款额 和 staking 周期。
+%The interest of staked funds is issued at withdrawal, and depends on both the amount and staking period of the fund being withdrawn. 
 
 
-
-In \name, the staking contract keeps track of staked funds and freezing rules. For every account $\account$ the staking contract records the following:
+在 Conflux 中，staking 合约追踪用于 staking 的款项和冻结规则。Staking 合约记录每个账户 $\account$ 的以下信息：
+%In \name, the staking contract keeps track of staked funds and freezing rules. For every account $\account$ the staking contract records the following:
 \begin{itemize}
-	\item {\bf staking funds}: each staking fund entry consists of the balance $v\in\N_{256}$ and creation time $t\in\N_{64}$ of a staked fund from the sender $\account$, and the entry is cleared when the fund is completely withdrawn;
+	\item {\bf staking 款项}: 每个 staking 款项由发送方 $\account$ 付出款项的余额 $v\in\N_{256}$ 和创建时间 $t\in\N_{64}$ 组成。当款项被全部退还后，此项将被清除。
+	%\item {\bf staking funds}: each staking fund entry consists of the balance $v\in\N_{256}$ and creation time $t\in\N_{64}$ of a staked fund from the sender $\account$, and the entry is cleared when the fund is completely withdrawn;
 	
 
-	\item {\bf freezing rules}: each freezing rule entry is a combination of $(v,t)\in \N_{256}\times\N_{64}$ which promises that the total stake balance of account $\account$ must be at least $v$ (measured in \unit) as long as the block number (as defined in \hyperlink{blockno}{$\blockno$}) does not exceed $t$. 
-	Expired freezing rule entries are cleared at the next update of freezing rules of the same account $\account$.	
+	\item {\bf 冻结规则}: 每个冻结规则项是一个组合 $(v,t)\in \N_{256}\times\N_{64}$。该项确保当（在 \hyperlink{blockno}{$\blockno$} 中定义的）区块号码不超过 $t$ 时，$\account$ 的所有 staking 余额不少于 $v$ （以 \unit 为单位）。
+	%\item {\bf freezing rules}: each freezing rule entry is a combination of $(v,t)\in \N_{256}\times\N_{64}$ which promises that the total stake balance of account $\account$ must be at least $v$ (measured in \unit) as long as the block number (as defined in \hyperlink{blockno}{$\blockno$}) does not exceed $t$. 
+	过期的冻结规则将在该账号 $\account$ 下次更新规则时被清除。
+	%Expired freezing rule entries are cleared at the next update of freezing rules of the same account $\account$.	
 \end{itemize}
 
-Both kinds of entries in the staking contract requires collateral for storage, and the collateral is returned at the clearance of corresponding entries.
+Staking 合约中的以上两个项都要求存储抵押，而该抵押将在对应项被清除时退还。
+%Both kinds of entries in the staking contract requires collateral for storage, and the collateral is returned at the clearance of corresponding entries.
 
 
 
