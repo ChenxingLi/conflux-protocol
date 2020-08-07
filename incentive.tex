@@ -23,11 +23,11 @@
 
 基本区块奖励始于每区块 $\baseaward(\gblock) = \initialblockreward$ \coinsign，
 %The base block award starts at $\baseaward(\gblock) = \initialblockreward$ \coinsign per block. 
-并以quarter（即 $\decayperiodinblock$ 个区块，期望值为 $\decayperiodinday$ 天）为单位调整。
+并以季度（即 $\decayperiodinblock$ 个区块，期望值为 $\decayperiodinday$ 天）为单位调整。
 %The based block award is adjusted in granularity of quarter. (i.e., $\decayperiodinblock$ blocks, $\decayperiodinday$ days in expectation).
-在最先的 $\decaystartinquarter$	个quarter （即约为 $\decaystartinyear$ 年），基本区块奖励与初始值相同，为每区块 $\initialblockreward$ \coinsign。 
+在最先的 $\decaystartinquarter$	个季度 （即约为 $\decaystartinyear$ 年），基本区块奖励与初始值相同，为每区块 $\initialblockreward$ \coinsign。 
 %In the first $\decaystartinquarter$ quarters (i.e. roughly $\decaystartinyear$ years), the base block award is the initial value $\initialblockreward$ \coinsign per block.
-在接下来的 $\decayquarters$ quarters （即约为 $\decayyears$ 年），每个quarter的基本区块奖励将减少 $\sqrt[\decayquarters]{1/4}$ （约为 $\decaybypercent\%$）
+在接下来的 $\decayquarters$ 个季度 （即约为 $\decayyears$ 年），每个季度的基本区块奖励将减少 $\sqrt[\decayquarters]{1/4}$ （约为 $\decaybypercent\%$）
 %In the next $\decayquarters$ quarters (i.e. roughly $\decayyears$ years), it decreases by $\sqrt[\decayquarters]{1/4}$ (about $\decaybypercent\%$) each quarter. 
 最终，区块奖励将固定为每区块 $\eventualblockreward$ \coinsign，且挖矿导致的新增代币年通胀率将低于 $\targetinflationpercent\%$。
 %Eventually the block reward is fixed at $\eventualblockreward$ \coinsign per block and annual inflation rate of mining issuance is below $\targetinflationpercent$ percent.
