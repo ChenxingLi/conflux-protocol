@@ -129,10 +129,11 @@ $\block$ 的 \emph{光锥外惩罚系数} 定义如下：
 %Thus, the base factor $\basef(\block)$ of block $\block$ is defined as
 \begin{align}\label{eq:basef}
 	\basef(\block)\eqdef \begin{cases}
-	 	1 & \mbox{$\block$ 合法且 $\af(\block)>0$, \newversion{不被投反对票（即 not blamed），且满足纪元 $\epoch_k$ 的目标难度（若$\mathrm{Adaptive}(\block)=\true$，则要求}}\\
+	 	1 & \mbox{$\block$ 合法且 $\af(\block)>0$，不被投反对票（即 not blamed），且满足纪元 $\epoch_k$ 的目标难度（若}\\
 		%1 & \mbox{$\block$ is valid and $\af(\block)>0$, \newversion{not blamed, and satisfies the target difficulty of $\epoch_k$ (which requires  }}\\
-		~ & \mbox{$\quality(\block)\ge \heavywvalue \cdot \mathbf{d}_{\epoch_k}$ 或，若$\mathrm{Adaptive}(\block)=\false$，则要求$\quality(\block)\ge \mathbf{d}_{\epoch_k}$}\\
-		0 & \mbox{否则 ($\block$ 部分合法, $\af(\block)=0$，被投反对票（blamed），或 $\quality(\block)$ 不满足要求)
+		~ & \mbox{$\mathrm{Adaptive}(\block)=\true$，则要求 $\quality(\block)\ge \heavywvalue \cdot \mathbf{d}_{\epoch_k}$ 或，若$\mathrm{Adaptive}(\block)=\false$，则要求}\\
+		~ & \mbox{$\quality(\block)\ge \mathbf{d}_{\epoch_k}$}\\
+		0 & \mbox{否则 ($\block$ 部分合法, $\af(\block)=0$，被投反对票（blamed），或 $\quality(\block)$ 不满足要求)}
 		%0 & \mbox{otherwise ($\block$ is partially valid, \newversion{$\af(\block)=0$, blamed}, or $\quality(\block)$ does not satisfy the requirement)} 
 	\end{cases}
 \end{align}
@@ -189,29 +190,31 @@ $\block$ 的 \emph{光锥外惩罚系数} 定义如下：
 \subsection{交易费奖励}
 %\subsection{Transaction Fee Reward}
 
-If a transaction $\tx$ is first executed successfully in the $i$-th epoch $\epoch_i$, then 
-the transaction fee (for purchasing the consumed gas) of $\tx$ is divided between all blocks that 
-% reside in $\epoch_i$ and include $\tx$.
-\emph{properly include }$\tx$.
-Here ``a block $\block$ properly includes a transaction $\tx$'' means that:
-% a) $\forall \block'\in\past(\block), \tx\notin\block'_{\txs}$;
-%  and  
-% b)
-% and ``$\block$ includes $\tx$ not too late'' means that 
-$\tx\in \block$ and $\block$ belongs to $\epoch_i$ (the epoch that $\tx$ is executed for the first time).
+如果一个交易 $\tx$ 在第 i 个纪元 $\epoch_i$ 内首次成功执行，
+%If a transaction $\tx$ is first executed successfully in the $i$-th epoch $\epoch_i$, 
+那么 $\tx$ 的交易费（用以购买燃料的费用）将被分配给所有“正确打包了交易 $\tx$” 的区块。
+%then the transaction fee (for purchasing the consumed gas) of $\tx$ is divided between all blocks that \emph{properly include }$\tx$.
+在此“一个区块 $\block$ 正确打包了交易 $\tx$”指的是： 
+%Here ``a block $\block$ properly includes a transaction $\tx$'' means that:
+$\tx\in \block$ 和 $\block$ 属于纪元 $\epoch_i$ （ $\tx$ 首次执行的纪元）。
+%$\tx\in \block$ and $\block$ belongs to $\epoch_i$ (the epoch that $\tx$ is executed for the first time).
 
 
-The transaction fee is distributed proportionally to the binary base factors of blocks as defined in (\ref{eq:basef}). 
-% in Section~\ref{sec:discount}.
-% That is, a block with a fully valid header and actual quality above the epoch target difficulty gets weight $1$ %({\color{red}or $w$ depending on whether it is a heavy block})
-% , and other blocks with partially valid headers or lower-than-target actual quality gets weight $0$.
-% 
-In particular, if the transaction $\tx$ is exclusively packed in blocks with zero base factor, the transaction fee is burnt although the transaction will still be processed. 
+交易费将根据各区块的二进制区块基础参数（在第 \ref{eq:basef} 节中有所定义）的比例分配。
+%The transaction fee is distributed proportionally to the binary base factors of blocks as defined in (\ref{eq:basef}). 
+特别地，若交易 $\tx$ 仅被打包在区块基础参数为零的区块中，系统仍将执行该笔交易，但其交易费将被焚毁。
+%In particular, if the transaction $\tx$ is exclusively packed in blocks with zero base factor, the transaction fee is burnt although the transaction will still be processed. 
 
-\oldversion{The total transaction fee reward of a block $\block$ is the sum of its portion of fees from every transaction in $\block_\txs$.}
-\newversion{After execution of block $\block$, we can get its receipt list $\mathbf{R}'(\block)$ with the same length as transaction list $\block_\txs$. So each transaction $\tx\in \block_\txs$ can be paired with its corresponding receipt $R$. The actually charged transaction fee is recorded in $R_f$.}
-Recalling that $\basef(\block)$ is a binary function respecting to the validity of $\block$,
- the transaction fee assigned to $\block$ is defined as follows:
+
+在执行区块 $\block$ 后，我们将获得与交易列表 $\block_\txs$ $\mathbf{R}'(\block)$ 长度一致的收据列表 $\mathbf{R}'(\block)$。
+%After execution of block $\block$, we can get its receipt list $\mathbf{R}'(\block)$ with the same length as transaction list $\block_\txs$. 
+因此，每笔交易 $\tx\in \block_\txs$ 可与其对应的收据 $R$ 配对，
+%So each transaction $\tx\in \block_\txs$ can be paired with its corresponding receipt $R$. 
+而实际支付的交易费记录在 $R_f$ 中。
+%The actually charged transaction fee is recorded in $R_f$.
+如前文所示，$\basef(\block)$ 代表一个关于 $\block$ 合法性的二进制函数，则分配给 $\block$ 的交易费定义如下：
+%Recalling that $\basef(\block)$ is a binary function respecting to the validity of $\block$,
+%the transaction fee assigned to $\block$ is defined as follows:
 \begin{align}\label{eq:txfee}
 	\feeaward(\block)\eqdef
 		 \sum_{\text{$(\tx,R):$ $\block$ properly includes $\tx$}}
@@ -220,63 +223,87 @@ Recalling that $\basef(\block)$ is a binary function respecting to the validity 
 		 \right\rfloor
 \end{align}
 
-When there are multiple blocks properly include the transaction $\tx$, there may be a remainder for transaction fee of $\tx$. Formally, the remainder $r$ equals to
+当多个区块同时正确包含交易 $\tx$ 时，$\tx$ 的交易费可能存在余数。正式定义下，该余数 $r$ 等于
+%When there are multiple blocks properly include the transaction $\tx$, there may be a remainder for transaction fee of $\tx$. Formally, the remainder $r$ equals to
 
 \begin{align}
 	r\eqdef R_f - \sum_{\block': \text{$\block'$ properly includes $\tx$}} \basef(\block') \cdot \left\lfloor\frac{R_f \cdot\basef(\block)}{\sum_{\block': \text{$\block'$ properly includes $\tx$}} \basef(\block') }\right\rfloor.
 \end{align}
 
-In case the remainder is non-zero, the blocks with $r$ minimum block hash $\kec(\rlp(\block_\head))$ will receive one more $\unit$. So the transaction fee can be exactly distributed to miners. 
+若该余数非零，区块哈希值 $\kec(\rlp(\block_\head))$ 最小的的前 $r$ 个区块将多得到 $1$ $\unit$。如此，交易费将被全部分配给矿工。
+%In case the remainder is non-zero, the blocks with $r$ minimum block hash $\kec(\rlp(\block_\head))$ will receive one more $\unit$. So the transaction fee can be exactly distributed to miners. 
 
 
-\subsubsection{Why not distributing transaction fees among all blocks in that epoch?}
-	One may suggest that the transaction fee of $\tx$ should be shared by all valid blocks in that epoch, rather than among blocks that properly include $\tx$ as described in (\ref{eq:txfee}).
-	In what follows we show that our current implementation has several advantages:
+\subsubsection{为何不将交易费分配给该纪元内所有区块？}
+%\subsubsection{Why not distributing transaction fees among all blocks in that epoch?}
+或许有人认为，$\tx$ 的交易费应由所在纪元的所有合法区块共享，而非由正确打包了 $\tx$ 的区块（定义见第 \ref{eq:txfee} 节）共享。
+	%One may suggest that the transaction fee of $\tx$ should be shared by all valid blocks in that epoch, rather than among blocks that properly include $\tx$ as described in (\ref{eq:txfee}).
+我们将在下文阐述现有设计的几个优点：
+	%In what follows we show that our current implementation has several advantages:
 	\begin{itemize}
-		\item {\bf For security and incentive compatibility:} 
-		the first priority of the incentive mechanism design is to guarantee that every rational participant will behave honestly, i.e. they should respect the consensus protocol and reference all the blocks they have observed.
-		However, the mechanism of sharing transaction fee may bring incentives that prevent the author of a block referencing other blocks.
+		\item {\bf 安全性和激励机制的兼容:} 
+		%\item {\bf For security and incentive compatibility:} 
+		激励机制设计的首要事项是保证每个理性参与者诚实表现，
+		%the first priority of the incentive mechanism design is to guarantee that every rational participant will behave honestly,
+		即他们将遵守共识协议并引用所有观察到的区块。
+		%i.e. they should respect the consensus protocol and reference all the blocks they have observed.
+		然而，共享交易费的机制可能为区块挖掘者不引用其他区块提供动机。
+		%However, the mechanism of sharing transaction fee may bring incentives that prevent the author of a block referencing other blocks.
 
-		For example, if there is a transaction $\tx$ with a considerable fee, miners may be willing to monopolize that fee even if suffering some punishment caused by a larger anti-cone.
-		In particular, the author who packs $\tx$ into a new block $\block$ would prefer not to share the transaction fee of $\tx$ with others, especially when this fee is much higher than the anti-cone punishment caused by ignoring other blocks that are eligible to share the fee of $\tx$.
+		例如，对于一笔带有可观交易费的交易 $\tx$，矿工们将愿意独占交易费，即使其将因较大的光锥外区域而遭受一些惩罚。
+		%For example, if there is a transaction $\tx$ with a considerable fee, miners may be willing to monopolize that fee even if suffering some punishment caused by a larger anti-cone.
+		将 $\tx$ 打包进一个新区块 $\block$ 的矿工将更倾向不和他人共享 $\tx$ 的交易费，尤其当这笔交易费远远大于光锥外惩罚时。（无视其它有资格共享 $\tx$ 交易费的区块将带来光锥外惩罚。）
+		%In particular, the author who packs $\tx$ into a new block $\block$ would prefer not to share the transaction fee of $\tx$ with others, especially when this fee is much higher than the anti-cone punishment caused by ignoring other blocks that are eligible to share the fee of $\tx$.
 
-		If the fee of $\tx$ is to be shared with all other blocks in the same epoch, the author of $\block$ would \emph{be hostile to all other unreferenced blocks}, and hence they get incentives to ignore those blocks by shirking all responsibility to network latency. 
-		Therefore, by manipulating transaction fees and causing such intentional ignorance, an attacker is able to effectively launch a partition attack.
+		若 $\tx$ 的费用被同一纪元内所有区块共享，$\block$ 的挖掘者将 \emph{对其他未被引用区块怀有敌意}，并因此获得以网络延迟为借口无视那些区块的动机。
+		%If the fee of $\tx$ is to be shared with all other blocks in the same epoch, the author of $\block$ would \emph{be hostile to all other unreferenced blocks}, and hence they get incentives to ignore those blocks by shirking all responsibility to network latency. 
+		因此，通过操控交易费和制造刻意无视，攻击者将能够有效地发起分区攻击。
+		%Therefore, by manipulating transaction fees and causing such intentional ignorance, an attacker is able to effectively launch a partition attack.
 
-		If the fee of $\tx$ is to be shared only among blocks including $\tx$, the author of $\block$ may still want to ignore other blocks with $\tx$. 
-		However, the difference is that the author of $\block$ would not be hostile to blocks without $\tx$, since he does not have to share the transaction fee of $\tx$ with them.
-		As a result, the author of $\block$ will be open to reference other observed blocks without $\tx$ in $\block$.
-		Furthermore, referencing blocks with $\tx$ in any later epoch is also safe, even if there are new transactions (other than $\tx$) with significant fees.
-		Thus by manipulating transaction fees the attacker could merely cause a slightly longer latency instead of a significant partition.
+		若 $\tx$ 的交易费仅由打包了 $\tx$ 的区块共享，$\block$ 的挖掘者仍可能想要无视其他打包了 $\tx$ 的区块。
+		%If the fee of $\tx$ is to be shared only among blocks including $\tx$, the author of $\block$ may still want to ignore other blocks with $\tx$. 
+		然而，与前一种分配方式不同的是 $\block$ 的挖掘者将不会对没有打包 $tx$ 的区块怀有敌意，因为他不必与那些区块共享 $tx$ 的交易费。
+		%However, the difference is that the author of $\block$ would not be hostile to blocks without $\tx$, since he does not have to share the transaction fee of $\tx$ with them.
+		因此，$\block$ 的挖掘者将愿意在 $\block$ 中引用那些他观察到的不包含 $\tx$ 的区块。
+		%As a result, the author of $\block$ will be open to reference other observed blocks without $\tx$ in $\block$.
+		不仅如此，在之后的纪元中引用包含 $\tx$ 的区块也同样是安全的，即使存在 $tx$ 以外的带有可观交易费的新交易。
+		%Furthermore, referencing blocks with $\tx$ in any later epoch is also safe, even if there are new transactions (other than $\tx$) with significant fees.
+		所以，通过操控交易费，攻击者仅能导致（与理想状态相比）稍长的延迟，而无法制造显著的分区。
+		%Thus by manipulating transaction fees the attacker could merely cause a slightly longer latency instead of a significant partition.
 
-		In conclusion, sharing transaction fee of $\tx$ only among blocks including $\tx$ provides a stronger incentive of referencing other blocks honestly.
+		总结而言，仅让包含 $\tx$ 的区块共享 $\tx$ 的交易费更好地激励矿工诚实引用其他区块。
+		%In conclusion, sharing transaction fee of $\tx$ only among blocks including $\tx$ provides a stronger incentive of referencing other blocks honestly.
 
-		\item {\bf For efficiency:} 
-		the current design better discourages ``free riders'' who only mines on empty blocks and hence saves the effort of  maintaining storage states and executing transactions.
-		Since by producing empty blocks, those miners would lose the transaction fees completely, rather than receiving an average revenue of total fees in that epoch.
+		\item {\bf 高效率：} 
+		%\item {\bf For efficiency:} 
+		现有设计更好地阻止了那些仅在空区块上挖矿，并因此无需维持存储状态和执行交易的“免费搭车者”。
+		%the current design better discourages ``free riders'' who only mines on empty blocks and hence saves the effort of  maintaining storage states and executing transactions.
+		因为通过生产空区块，矿工将完全无法获得交易费，而非（依靠平分）获得所在纪元全部费用的平均收益。
+		%Since by producing empty blocks, those miners would lose the transaction fees completely, rather than receiving an average revenue of total fees in that epoch.
 
-		\item {\bf For fairness:}
-		the current design indeed implements a tailored version of Shapley value, which is a fair distribution of total gains well-known in cooperative game theory.
+		\item {\bf 公平性：}
+		%\item {\bf For fairness:}
+		现有设计使用了一个特制版本的 Shapley 值法。该值法在合作博弈论中十分有名，常用于公平分配总计获利。
+		%the current design indeed implements a tailored version of Shapley value, which is a fair distribution of total gains well-known in cooperative game theory.
 	\end{itemize}
 
 
 
 
-\subsection{Final Reward to Miners}
+\subsection{矿工的最终奖励}
+%\subsection{Final Reward to Miners}
 
-The final mining reward of a block $\block$ will be added to the block author's account as specified in the {\bf author} field $\head(\block)_a$.
-Since the anti-cone of $\block$ may contain blocks up to $\anticonecountepoch$ epochs after the $\epoch$ of $\block$,
-the reward assigned to $\block$ effects at the end of $\minerfreeze$ epochs after the $\epoch$ of $\block$, where the balance of $\block_a$ is updated.
- % Due to \deferblk-blocks deferred execution, this reward becomes available at $\minerfreeze+\deferblk$ epochs after the epoch of $\block$. 
-For example, if $\block$ appears in $\epoch_i$, then the account $\block_a$ receives the mining reward at the end of $\epoch_{i+\minerfreeze}$. 
-% Such a receive will be executed at the end of $\epoch_{i+\minerfreezeexec}$.
-The total mining reward of $\block$ is calculated as follows:
+一个区块 $\block$  的最终挖矿奖励将被存入由 {\bf 挖掘者} $\head(\block)_a$ 所指明的区块挖掘者账户中。
+%The final mining reward of a block $\block$ will be added to the block author's account as specified in the {\bf author} field $\head(\block)_a$.
+因为 $\block$ 的光锥外区块最晚可能处于 $\block$ 所在纪元的 $\anticonecountepoch$ 个纪元之后，
+%Since the anti-cone of $\block$ may contain blocks up to $\anticonecountepoch$ epochs after the $\epoch$ of $\block$,
+分配给 $\block$ 的奖励在 $\block$ 所在纪元的 $\minerfreeze$ 个纪元结束时生效。此时，$\block_a$ 的余额将被更新。
+%the reward assigned to $\block$ effects at the end of $\minerfreeze$ epochs after the $\epoch$ of $\block$, where the balance of $\block_a$ is updated.
+例如，若 $\block$ 出现在纪元 $\epoch_i$， 那么账户 $\block_a$ 将在纪元 $\epoch_{i+\minerfreeze}$ 结束时收到挖矿奖励。
+%For example, if $\block$ appears in $\epoch_i$, then the account $\block_a$ receives the mining reward at the end of $\epoch_{i+\minerfreeze}$. 
+$\block$ 的挖矿奖励全额计算如下：
+%The total mining reward of $\block$ is calculated as follows:
 
-\oldversion{
-	\begin{align}
-		\reward(\block)\eqdef \af(\block)\cdot \award(\block)  + \feeaward(\block) = \af(\block)\cdot\basef(\block)\cdot\wf(\block)\cdot\award(\epoch_\block) + \feeaward(\block)
-	\end{align}
-}
 \newversion{
 	\begin{align}
 	\reward(\block)\eqdef  \award(\block) + \storageaward(\block) + \feeaward(\block) 
@@ -284,9 +311,10 @@ The total mining reward of $\block$ is calculated as follows:
 \end{align}
 }
 
-In particular, note that $\af(\block)=0$ implies $\basef(\block)=0$ and $\award(\block)=\storageaward(\block)=\feeaward(\block)=0$.
-Thus  
-$\reward(\block)=0$ as long as $\block$ has a large anti-cone such that $\af(\block)=0$.
+需要特别注意的是，$\af(\block)=0$ 说明 $\basef(\block)=0$ 且 $\award(\block)=\storageaward(\block)=\feeaward(\block)=0$。
+%In particular, note that $\af(\block)=0$ implies $\basef(\block)=0$ and $\award(\block)=\storageaward(\block)=\feeaward(\block)=0$.
+因此，只要 $\block$ 有一个满足 $\af(\block)=0$ 的光锥外区域，则$\reward(\block)=0$。
+%Thus $\reward(\block)=0$ as long as $\block$ has a large anti-cone such that $\af(\block)=0$.
 
 
 
