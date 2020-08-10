@@ -241,11 +241,11 @@ $\tx\in \block$ 和 $\block$ 属于纪元 $\epoch_i$ （ $\tx$ 首次执行的�
 我们将在下文阐述现有设计的几个优点：
 	%In what follows we show that our current implementation has several advantages:
 	\begin{itemize}
-		\item {\bf 安全性和激励机制的兼容:} 
+		\item {\bf 安全性和激励相容:} 
 		%\item {\bf For security and incentive compatibility:} 
-		激励机制设计的首要事项是保证每个理性参与者诚实表现，
+		激励机制设计的首要事项是保证每个理性参与者遵守规则，
 		%the first priority of the incentive mechanism design is to guarantee that every rational participant will behave honestly,
-		即他们将遵守共识协议并引用所有观察到的区块。
+		即他们将遵守共识协议并引用所有收到的区块。
 		%i.e. they should respect the consensus protocol and reference all the blocks they have observed.
 		然而，共享交易费的机制可能为区块挖掘者不引用其他区块提供动机。
 		%However, the mechanism of sharing transaction fee may bring incentives that prevent the author of a block referencing other blocks.
@@ -264,9 +264,10 @@ $\tx\in \block$ 和 $\block$ 属于纪元 $\epoch_i$ （ $\tx$ 首次执行的�
 		%If the fee of $\tx$ is to be shared only among blocks including $\tx$, the author of $\block$ may still want to ignore other blocks with $\tx$. 
 		然而，与前一种分配方式不同的是 $\block$ 的挖掘者将不会对没有打包 $tx$ 的区块怀有敌意，因为他不必与那些区块共享 $tx$ 的交易费。
 		%However, the difference is that the author of $\block$ would not be hostile to blocks without $\tx$, since he does not have to share the transaction fee of $\tx$ with them.
-		因此，$\block$ 的挖掘者将愿意在 $\block$ 中引用那些他观察到的不包含 $\tx$ 的区块。
+		因此，$\block$ 的挖掘者将愿意在 $\block$ 中引用那些他接收到的不包含 $\tx$ 的区块。
 		%As a result, the author of $\block$ will be open to reference other observed blocks without $\tx$ in $\block$.
-		不仅如此，在之后的纪元中引用包含 $\tx$ 的区块也同样是安全的，即使存在 $tx$ 以外的带有可观交易费的新交易。
+		不仅如此，在之后的纪元中引用包含 $\tx$ 的区块也同样是安全的（根据打包的合法性，区块仅可能与同一纪元的其他区块共享交易费）。
+		%即使存在 $tx$ 以外的带有可观交易费的新交易。
 		%Furthermore, referencing blocks with $\tx$ in any later epoch is also safe, even if there are new transactions (other than $\tx$) with significant fees.
 		所以，通过操控交易费，攻击者仅能导致（与理想状态相比）稍长的延迟，而无法制造显著的分区。
 		%Thus by manipulating transaction fees the attacker could merely cause a slightly longer latency instead of a significant partition.
@@ -297,7 +298,7 @@ $\tx\in \block$ 和 $\block$ 属于纪元 $\epoch_i$ （ $\tx$ 首次执行的�
 %The final mining reward of a block $\block$ will be added to the block author's account as specified in the {\bf author} field $\head(\block)_a$.
 因为 $\block$ 的光锥外区块最晚可能处于 $\block$ 所在纪元的 $\anticonecountepoch$ 个纪元之后，
 %Since the anti-cone of $\block$ may contain blocks up to $\anticonecountepoch$ epochs after the $\epoch$ of $\block$,
-分配给 $\block$ 的奖励在 $\block$ 所在纪元的 $\minerfreeze$ 个纪元结束时生效。此时，$\block_a$ 的余额将被更新。
+分配给 $\block$ 的奖励将在 $\block$ 所在纪元的 $\minerfreeze$ 个纪元结束时生效。届时，$\block_a$ 的余额将被更新。
 %the reward assigned to $\block$ effects at the end of $\minerfreeze$ epochs after the $\epoch$ of $\block$, where the balance of $\block_a$ is updated.
 例如，若 $\block$ 出现在纪元 $\epoch_i$， 那么账户 $\block_a$ 将在纪元 $\epoch_{i+\minerfreeze}$ 结束时收到挖矿奖励。
 %For example, if $\block$ appears in $\epoch_i$, then the account $\block_a$ receives the mining reward at the end of $\epoch_{i+\minerfreeze}$. 
@@ -311,9 +312,9 @@ $\block$ 的挖矿奖励全额计算如下：
 \end{align}
 }
 
-需要特别注意的是，$\af(\block)=0$ 说明 $\basef(\block)=0$ 且 $\award(\block)=\storageaward(\block)=\feeaward(\block)=0$。
+需要特别注意的是，$\af(\block)=0$时，$\basef(\block)=0$ 且因此 $\award(\block)=\storageaward(\block)=\feeaward(\block)=0$。
 %In particular, note that $\af(\block)=0$ implies $\basef(\block)=0$ and $\award(\block)=\storageaward(\block)=\feeaward(\block)=0$.
-因此，只要 $\block$ 有一个满足 $\af(\block)=0$ 的光锥外区域，则$\reward(\block)=0$。
+因此，只要 $\block$ 的光锥外惩罚系数为 $\af(\block)=0$，则 $\reward(\block)=0$。
 %Thus $\reward(\block)=0$ as long as $\block$ has a large anti-cone such that $\af(\block)=0$.
 
 
