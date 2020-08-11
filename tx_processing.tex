@@ -105,72 +105,99 @@
 	R_u=R'_u && R_f=0 && R_g=0 && R_{\bf l}=\emptystring && R_z=2 && R_s=0 && R_{\bf o}=\emptystring && R_{\bf i}=\emptystring
 \end{align}
 %
-Log $R_{\bf l}$ 的布隆过滤器 $R_b$ computed accordingly。
+布隆过滤器 $R_b$ 根据日志 $R_{\bf l}$ 计算而已。
 %(The bloom filter $R_b$ of log $R_{\bf l}$ is computed accordingly. )
 
 若 $\tx$ 通过了以上交易前检查，$\tx$ 的执行过程如本节余下内容所述。
-If $\tx$ passes all the above pre-execution checks, the execution of $\tx$ is as specified in the rest of this section.
+%If $\tx$ passes all the above pre-execution checks, the execution of $\tx$ is as specified in the rest of this section.
 
-\subsection{Transaction Execution}
+\subsection{交易执行}
+%\subsection{Transaction Execution}
 
-\subsubsection{Eligibility for sponsorship}
+\subsubsection{赞助资格}
+%\subsubsection{Eligibility for sponsorship}
 
-When $\tx$ is calling a contract $\contract$, the gas fee and storage collateral during the transaction execution could be sponsored by the contract $\contract$. If the sender $\sender{\tx}$ is in the {\bf sponsor whitelist} of contract $\contract$, the gas fee of the current transaction does not exceed the {\bf sponsor limit for gas} of contract and contract $\contract$ has a {\bf sponsor for gas}, transaction $\tx$ is eligible for sponsorship on gas consumption. Formally, we define 
+当 $\tx$ 调用一个合约 $\contract$ 时，交易执行的燃料费和存储抵押可由合约 $\contract$ 赞助。
+%When $\tx$ is calling a contract $\contract$, the gas fee and storage collateral during the transaction execution could be sponsored by the contract $\contract$. 
+若发送方 $\sender{\tx}$ 在合约 $\contract$ 的 {\bf 赞助人白名单} 中，当前交易的燃料费不超过合约的 {\bf 燃料资助上限}，且合约 $\contract$ 带有 {\bf 燃料资助人}，交易  $\tx$  有资格使用燃料赞助。正式定义下，
+%If the sender $\sender{\tx}$ is in the {\bf sponsor whitelist} of contract $\contract$, the gas fee of the current transaction does not exceed the {\bf sponsor limit for gas} of contract and contract $\contract$ has a {\bf sponsor for gas}, transaction $\tx$ is eligible for sponsorship on gas consumption. Formally, we define 
 \begin{align}
 	\mathsf{GasElig}(\st,\tx)\eqdef \quad \mathrm{Type}_{\tx_a}=\typecontract \;\wedge\; \mathsf{Whitelist}(\st,\sender{\tx},\contract) \;\wedge\; \st[\tx_a]_p[\mathsf{gas}]_a\neq 0 \;\wedge\; \tx_g\times\tx_p \le \st[\tx_a]_p[\mathsf{limit}] 
 \end{align}
-where function $\mathsf{Whitelist}(\cdot)$ is defined in \cref{eq:whitelist}. 
+其中，函数 $\mathsf{Whitelist}(\cdot)$ 在 \cref{eq:whitelist} 中有所定义。
+%where function $\mathsf{Whitelist}(\cdot)$ is defined in \cref{eq:whitelist}. 
 
-If the sender $\sender{\tx}$ is in the {\bf sponsor whitelist} of contract $\contract$ and contract $\contract$ has a {\bf sponsor for collateral}, transaction $\tx$ is also eligible for sponsorship on storage collateral.
+若发送方 $\sender{\tx}$ 在合约 $\contract$ 的 {\bf 赞助人白名单} 中，且合约 $\contract$ 带有 {\bf 存储抵押赞助人}， 交易 $\tx$ 也有资格使用存储抵押赞助。
+%If the sender $\sender{\tx}$ is in the {\bf sponsor whitelist} of contract $\contract$ and contract $\contract$ has a {\bf sponsor for collateral}, transaction $\tx$ is also eligible for sponsorship on storage collateral.
 \begin{align}
 	\mathsf{ColElig}(\st,\tx)\eqdef \quad \mathrm{Type}_{\tx_a}=\typecontract \;\wedge\; \mathsf{Whitelist}(\st,\sender{\tx},\contract) \;\wedge\; \st[\tx_a]_p[\mathsf{col}]_a\neq 0
 \end{align}
 
-\subsubsection{Preprocessing}
+\subsubsection{预处理}
+%\subsubsection{Preprocessing}
 \label{subsubsec:preprocessing}
 
-In the preprocessing phase of $\tx$, the balance of $\sender{\tx}$ (and the sponsor, if applicable) is examined so that the payment for any further operation is assured.
-The world-state will be transformed from $\st$ into $\st^0\eqdef \st^{**}$ if $\tx$ passes the preprocessing, or directly into $\st'$ and the execution is aborted if $\tx$ fails at any step.
+在 $\tx$ 的预处理阶段，为确保未来成功操作，$\sender{\tx}$（或资助人） 的余额将被检查。
+%In the preprocessing phase of $\tx$, the balance of $\sender{\tx}$ (and the sponsor, if applicable) is examined so that the payment for any further operation is assured.
+若 $\tx$ 通过了预处理，世界状态将从 $\st$ 转变为 $\st^0\eqdef \st^{**}$；否则，世界状态将变为 $\st'$，而交易 $\tx$ 的执行将被中止。
+%The world-state will be transformed from $\st$ into $\st^0\eqdef \st^{**}$ if $\tx$ passes the preprocessing, or directly into $\st'$ and the execution is aborted if $\tx$ fails at any step.
 
-\paragraph{Nonce incremental.}
-The beginning of execution 
-causes an irrevocable changed to the state $\st$: 
-the nonce of the sender, $\sender{\tx}_n$, is incremented by one. 
+\paragraph{序列号增加}
+%\paragraph{Nonce incremental.}
+交易执行的开始将对世界状态 $\st$ 产生一个不可更改的变动：
+%The beginning of execution causes an irrevocable changed to the state $\st$: 
+发送方的账户序列号 $\sender{\tx}_n$ 将增加一。
+%the nonce of the sender, $\sender{\tx}_n$, is incremented by one. 
 %
-We define the state $\st^*$:
+世界状态 $\st^*$ 的定义如下：
+%We define the state $\st^*$:
 \begin{align}
 	\st^*  &\eqdef \st \qquad \mbox{  except:}\\
 	\st^*\left[\sender{\tx} \right]_n &\eqdef \st\left[\sender{\tx} \right]_n+1 
 \end{align}
 
-\paragraph{Gas consumption payment validation.}
+\paragraph{燃料消耗支付验证}
+%\paragraph{Gas consumption payment validation.}
 
-The up-front payment of a transaction $\tx$ first figures out whether the gas consumption is sponsored. $\tx$ is sponsored on gas consumption if $\tx$ is eligible for sponsorship on gas consumption and the calling contract has sufficient \textbf{sponsor balance for gas fee}. 
+进行交易 $\tx$ 的提前支付时，系统首先明确燃料消耗是否有赞助。
+%The up-front payment of a transaction $\tx$ first figures out whether the gas consumption is sponsored. 
+若 $\tx$ 有资格使用燃料赞助，且其调用的合约有足够的 \textbf{燃料资助余额}，则交易 $\tx$ 有燃料赞助。
+%$\tx$ is sponsored on gas consumption if $\tx$ is eligible for sponsorship on gas consumption and the calling contract has sufficient \textbf{sponsor balance for gas fee}. 
 \begin{align}
 	\mathsf{GasSpr}(\st,\tx) \eqdef\quad  \mathsf{GasElig}(\st,\tx) \;\wedge\; \st[\tx_a]_p[{\sf gas}]_b\ge \tx_g\times\tx_p
 \end{align}
 \begin{itemize}
-	\item If the gas consumption of $\tx$ is sponsored, the world-state $\st^{**}$ after gas consumption payment is as follows: 
+	\item 若 $\tx$ 的燃料消耗使用了赞助，燃料费支付后的世界状态 $\st^{**}$ 定义如下：
+	%\item If the gas consumption of $\tx$ is sponsored, the world-state $\st^{**}$ after gas consumption payment is as follows: 
 	\begin{align}
 		\st^{**}  &\eqdef \st^* \qquad \mbox{  except:}\\
 		\st^{**}\left[\contract_{addr}\right]_p[{\sf gas}]_b &\eqdef \st^*\left[I_a\right]_p[{\sf gas}]_b-\tx_g\times\tx_p
 	\end{align} 
 	
-	\item Otherwise, the sender $\sender{\tx}$ is required to pay for the gas consumption. 
-	The balance of $\sender{\tx}$ should satisfy $\st^{*} \left[\sender{\tx}\right]_b \ge \tx_g\times\tx_p+\tx_v$ and otherwise a \emph{not enough balance exception} is generated. The handling of \emph{not enough balance exception} will be discussed later.
-	The world-state after the gas consumption payment is defined as: 
+	\item 否则，发送方 $\sender{\tx}$ 需支付燃料费。
+	%\item Otherwise, the sender $\sender{\tx}$ is required to pay for the gas consumption. 
+	$\sender{\tx}$ 的余额应满足 $\st^{*} \left[\sender{\tx}\right]_b \ge \tx_g\times\tx_p+\tx_v$；否则，系统将生成一个 \emph{余额不足例外}。
+	%The balance of $\sender{\tx}$ should satisfy $\st^{*} \left[\sender{\tx}\right]_b \ge \tx_g\times\tx_p+\tx_v$ and otherwise a \emph{not enough balance exception} is generated. 
+	处理此 \emph{余额不足例外} 的方法将在之后讨论。
+	%The handling of \emph{not enough balance exception} will be discussed later.
+	燃料费支付后的世界状态定义如下：
+	%The world-state after the gas consumption payment is defined as: 
 	\begin{align}
 		\st^{**}  &\eqdef \st^* \qquad \mbox{  except:}\\
 		\st^{**} \left[\sender{\tx}\right]_b &\eqdef \max\set{\st^*\left[\sender{\tx}\right]_b-\tx_g\times\tx_p,0}
 	\end{align}
 \end{itemize}
 
-\paragraph{Storage limit validation.}
+\paragraph{存储上限验证}
+%\paragraph{Storage limit validation.}
 
-After charging, Conflux decides who is responsible for storage collateral. If $\tx$ is eligible for sponsorship on storage collateral and calling contract $\contract=\tx_a$ has enough \textbf{sponsor balance for collateral}, contract $\contract$ is responsible for the storage collateral resulted in the execution of $\tx$ and will be the owner of modified entries. 
+确定燃料费用后，Conflux 将决定由谁来支付存储抵押。
+%After charging, Conflux decides who is responsible for storage collateral. 
+若 $\tx$ 有资格使用存储抵押赞助，且被调用的合约 $\contract=\tx_a$ 有充足的 \textbf{存储抵押资助余额}，则合约 $\contract$ 将负责支付由执行 $\tx$ 产生的存储抵押，并成为修改项的所有者。
+%If $\tx$ is eligible for sponsorship on storage collateral and calling contract $\contract=\tx_a$ has enough \textbf{sponsor balance for collateral}, contract $\contract$ is responsible for the storage collateral resulted in the execution of $\tx$ and will be the owner of modified entries. 
 %
-Otherwise, the sender $\sender{\tx}$ is the owner of modified entries
-and has the obligation to pay corresponding storage collateral. 
+否则，发送方 $\sender{\tx}$ 为修改项的所有者，并有义务支付相应的存储抵押。
+%Otherwise, the sender $\sender{\tx}$ is the owner of modified entries and has the obligation to pay corresponding storage collateral. 
 %
 \begin{align}
 	\mathsf{ColSpr}(\st,\tx) &\eqdef\quad  \mathsf{ColElig}(\st,\tx) \;\wedge\; \st[\tx_a]_p[{\sf col}]_b\ge \tx_\ell\times 10^{18}/1024 \\
@@ -180,25 +207,39 @@ and has the obligation to pay corresponding storage collateral.
 	\end{array}\right.
 \end{align}
 
-If $\sender{\tx}$ is the storage owner but his balance cannot afford the full collateral as declared in {\bf storageLimit} after transferring value $\tx_v$, 
-i.e. $\st^{**}[\sender{\tx}]_b<\tx_v+\tx_\ell\times 10^{18}/1024$, 
-then the execution of $\tx$ fails due to \emph{not enough balance exception}. 
+若 $\sender{\tx}$ 是存储所有者，但其账户在转帐 $\tx_v$ 后无法负担 {\bf 存储上限} 所标明的抵押全额，
+%If $\sender{\tx}$ is the storage owner but his balance cannot afford the full collateral as declared in {\bf storageLimit} after transferring value $\tx_v$, 
+即 $\st^{**}[\sender{\tx}]_b<\tx_v+\tx_\ell\times 10^{18}/1024$，
+%i.e. $\st^{**}[\sender{\tx}]_b<\tx_v+\tx_\ell\times 10^{18}/1024$, 
+那么 $\tx$ 的执行将因为 \emph{余额不足例外} 失败。
+%then the execution of $\tx$ fails due to \emph{not enough balance exception}. 
 
-\paragraph{Handling not enough balance exception.} 
+\paragraph{处理余额不足例外} 
+%\paragraph{Handling not enough balance exception.} 
 
-Whenever the preprocessing of $\tx$ generates a \emph{not enough balance exception} during preprocessing, the execution of $\tx$ fails and there will be no further execution of $\tx$. To figure out whether this exception caused by the insufficient sponsorship balance in contract, the sender balance before transaction execution (i.e. $\st[\sender{\tx}]_b$) is compared with a \emph{minimum required balance} defined as
+每当 $\tx$ 在预处理过程中生成一个 \emph{余额不足例外} 时，$\tx$ 的执行将失败，且 $\tx$ 将不继续执行。
+%Whenever the preprocessing of $\tx$ generates a \emph{not enough balance exception} during preprocessing, the execution of $\tx$ fails and there will be no further execution of $\tx$. 
+为明确该例外是否由合约的赞助余额不足造成，交易执行前的发送方账户余额（即 $\st[\sender{\tx}]_b$）将与一个 \emph{最低要求余额（minimum required balance）} 做比较。该 \emph{最低要求余额} 定义如下： 
+%To figure out whether this exception caused by the insufficient sponsorship balance in contract, the sender balance before transaction execution (i.e. $\st[\sender{\tx}]_b$) is compared with a \emph{minimum required balance} defined as
 \begin{align}
 	\tx_v+(1-\mathbb{I}(\mathsf{GasElig}(\st,\tx)))\times \tx_g \times \tx_p + (1-\mathbb{I}(\mathsf{ColElig}(\st,\tx)))\times \tx_\ell \times \collateralperbyte.
 \end{align}
 
-If $\st[\sender{\tx}]_b$ has enough balance for \emph{minimum required balance}, the sender $\sender{\tx}$ is considered not responsible for the generated \emph{not enough balance exception}. 
-In this case, the resultant world-state $\st'$ is reverted to $\st$, the nonce of sender is reset so that $\tx$ is reusable. The receipt is composed as follows (where $R'$ refers the receipt of last transaction):
+若 $\st[\sender{\tx}]_b$ 大于 \emph{最低要求余额}，系统将认定 \emph{余额不足例外} 不因发送方 $\sender{\tx}$ 而产生。
+%If $\st[\sender{\tx}]_b$ has enough balance for \emph{minimum required balance}, the sender $\sender{\tx}$ is considered not responsible for the generated \emph{not enough balance exception}. 
+这种情况下，例外所造成的世界状态 $\st'$ 将被恢复为 $\st$；为使 $\tx$ 可被再次使用，发送方的账户序列号将被重设
+%In this case, the resultant world-state $\st'$ is reverted to $\st$, the nonce of sender is reset so that $\tx$ is reusable. 
+收据由以下项组成（其中 $R'$ 表示上一笔交易的收据）：
+%The receipt is composed as follows (where $R'$ refers the receipt of last transaction):
 \begin{align}
 	&R_u=R'_u && R_f=0 && R_g=0 && R_{\bf l}=\emptystring \\
 	&R_z=2 && R_s=0 && R_{\bf o}=\emptystring && R_{\bf i}=\emptystring
 \end{align}
 
-In other cases, sender $\sender{\tx}$ is responsible for the exception. The resultant world-state is $\st'\eqdef \st^{**}$ and the receipt is composed as follows (where $R'$ refers the receipt of last transaction):
+其他情况下，例外因发送方 $\sender{\tx}$ 而产生。
+%In other cases, sender $\sender{\tx}$ is responsible for the exception. 
+例外所造成的世界状态是 $\st'\eqdef \st^{**}$，而收据由以下项组成（其中 $R'$ 表示上一笔交易的收据）：
+%The resultant world-state is $\st'\eqdef \st^{**}$ and the receipt is composed as follows (where $R'$ refers the receipt of last transaction):
 \begin{align}
 	&R_u=R'_u+\tx_g && R_f=\min\{\tx_g\times\tx_p,\st[\sender{\tx}]_b\} && R_g=\mathsf{GasElig}(\st,\tx) && R_{\bf l}=\emptystring \\
 	&R_z=1 && R_s=0 && R_{\bf o}=\emptystring && R_{\bf i}=\emptystring
