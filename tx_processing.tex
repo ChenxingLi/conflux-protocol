@@ -27,7 +27,7 @@
 %In case the transaction $\tx$ is calling a smart contract $\contract$ with sponsorship for gas consumption and $\tx$ is qualified for the subsidy as specified in Section~\ref{sec:sponsor}, 
 若 $\contract$ 有足够的 \textbf{燃料资助余额}，$\contract$ 将负责支付燃料费用；否则，交易发送方 $\sender{\tx}$ 仍将承担所有燃料消耗费用。
 %$\contract$ is responsible for the purchase of gas if it has sufficient \textbf{sponsor balance for gas},and otherwise the sender $\sender{\tx}$ is still responsible for the whole purchase of gas as if there were no sponsor at all.
-与以太坊相似，燃料不存在于交易执行以外。
+与以太坊相似，燃料不存在于交易执行过程以外。
 %Like in Ethereum, gas does not exist outside the execution of transactions.
 
 
@@ -58,8 +58,6 @@
 %In computing the accumulated gas used of the whole block, the non-refundable gas $g^{\dagger} - g'$ is not taken into consideration. 
 但当发送方 $\sender{\tx}$ 无法负担燃料费时，即使实际收取的燃料费少于 $\tx_p\times\tx_g$，我们也认为消耗的燃料量即是 $\tx_g$。
 %But in case the sender $\sender{\tx}$ can not afford gas fee, the gas used is considered as $\tx_g$, even if the actual charged gas fee is less than $\tx_p\times\tx_g$. The gas used is also recorded in receipt $R_g$. 
-因此，一个区块的累计燃料消耗本质上等于交易收据里 $R_g$ 域的总和。
-%Thus the accumulated gas used of a block is intrinsically taking the summation of field $R_g$ over transaction receipts.
 
 
 每笔交易都有一个 \textbf{存储上限} 域，表明当前交易可增加的最大存储字节 $\tx_\ell$。
@@ -73,7 +71,7 @@
 更多有关存储抵押的细节详见第 \ref{sec:collateral} 节。
 %More details for collateral for storage is specified in section~\ref{sec:collateral}. 
 
-\subsection{交易前验证}
+\subsection{执行前验证}
 %\subsection{Pre-execution Validation}
 \label{sec:tx validate}
 
@@ -114,7 +112,7 @@
 \subsection{交易执行}
 %\subsection{Transaction Execution}
 
-\subsubsection{赞助资格}
+\subsubsection{被赞助资格}
 %\subsubsection{Eligibility for sponsorship}
 
 当 $\tx$ 调用一个合约 $\contract$ 时，交易执行的燃料费和存储抵押可由合约 $\contract$ 赞助。
