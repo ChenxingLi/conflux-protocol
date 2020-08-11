@@ -73,37 +73,42 @@
 更多有关存储抵押的细节详见第 \ref{sec:collateral} 节。
 %More details for collateral for storage is specified in section~\ref{sec:collateral}. 
 
-\subsection{Pre-execution Validation}
+\subsection{交易前验证}
+%\subsection{Pre-execution Validation}
 \label{sec:tx validate}
 
-Before being executed, a transaction $\tx$ in the processing queue must pass the following secondary test of intrinsic validity. 
+在被执行前，一笔处于待执行列中的交易 $\tx$ 必须通过以下有关交易合法性的第二轮测试：
+%Before being executed, a transaction $\tx$ in the processing queue must pass the following secondary test of intrinsic validity. 
 \begin{enumerate}[nosep]
-	\item The current epoch is in the range specified by \textbf{epochHeight}, 
-	i.e. current epoch height is in $[\tx_e - \txepochbound, \tx_e + \txepochbound]$.
+	\item 当前纪元处于 \textbf{epochHeight} 所指明的区间之内，即当前纪元高度在 $[\tx_e - \txepochbound, \tx_e + \txepochbound]$ 之间。
+	%\item The current epoch is in the range specified by \textbf{epochHeight}, i.e. current epoch height is in $[\tx_e - \txepochbound, \tx_e + \txepochbound]$.
 	
-	\item The transaction \textbf{nonce} is valid,
-   i.e. $\tx_n = \st\left[\sender{\tx}\right]_n$ where $\st$ is the current world-state.
+	\item 交易 \textbf{序列号} 合法，即 $\tx_n = \st\left[\sender{\tx}\right]_n$，其中 $\st$ 表示当前世界状态。
+	%\item The transaction \textbf{nonce} is valid, i.e. $\tx_n = \st\left[\sender{\tx}\right]_n$ where $\st$ is the current world-state.
 
-   \item The recipient address is valid , i.e. the type indicator (first $4$-bit) of $\tx_a$ belongs to $\set{\typereserved,\typenormal,\typecontract}$.
+	\item 接收方地址合法，即 $\tx_a$ 的（前 $4$ 位）类型标志属于 $\set{\typereserved,\typenormal,\typecontract}$。
+    %\item The recipient address is valid , i.e. the type indicator (first $4$-bit) of $\tx_a$ belongs to $\set{\typereserved,\typenormal,\typecontract}$.
 \end{enumerate}
 
-Note that the local legality of the transaction, 
-e.g. the $\rlp$ format
-% , intrinsic gas limit, 
-and the validity of signature, 
-is already verified in the first intrinsic validity test before accepting the corresponding block into the \name \tg, as discussed in Section~\ref{sec:block validate},
-and will not be checked again at this moment.
+需要注意的是交易的本地合法性，即 $\rlp$ 格式和签名有效性，
+%Note that the local legality of the transaction, e.g. the $\rlp$ format and the validity of signature, 
+已在有关交易合法性的第一轮测试中（定义见第 \ref{sec:block validate} 节）得到验证。第一轮测试在将相应区块纳入 \name 树图时进行，因此在第二轮测试中本地合法性将不被二次检查。
+%is already verified in the first intrinsic validity test before accepting the corresponding block into the \name \tg, as discussed in Section~\ref{sec:block validate}, and will not be checked again at this moment.
 
-If $\tx$ fails at these checks, the transaction will not be executed, the nonce for account will not increase and no transaction fee is charged for such transaction. Let $R'$ be the receipt of last transaction.
-Then the receipt of current transaction will be set as follows:
+若 $\tx$ 未能通过这些检查，系统将不执行该交易，不增加账户序列号，也不对此交易收取交易费用。
+%If $\tx$ fails at these checks, the transaction will not be executed, the nonce for account will not increase and no transaction fee is charged for such transaction. 
+用 $R'$ 表示前一笔交易的收据，
+%Let $R'$ be the receipt of last transaction.
+则当前交易的收据将被设为：
+%Then the receipt of current transaction will be set as follows:
 \begin{align}
 	R_u=R'_u && R_f=0 && R_g=0 && R_{\bf l}=\emptystring && R_z=2 && R_s=0 && R_{\bf o}=\emptystring && R_{\bf i}=\emptystring
 \end{align}
 %
-(The bloom filter $R_b$ of log $R_{\bf l}$ is computed accordingly. 
-)
+Log $R_{\bf l}$ 的布隆过滤器 $R_b$ computed accordingly。
+%(The bloom filter $R_b$ of log $R_{\bf l}$ is computed accordingly. )
 
-
+若 $\tx$ 通过了以上交易前检查，$\tx$ 的执行过程如本节余下内容所述。
 If $\tx$ passes all the above pre-execution checks, the execution of $\tx$ is as specified in the rest of this section.
 
 \subsection{Transaction Execution}

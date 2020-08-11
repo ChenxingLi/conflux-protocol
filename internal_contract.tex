@@ -66,14 +66,14 @@ $\tx$ 的燃料消耗将（在余额充足的前提下）从 $\contract$ 的 \te
 %The gas consumption of $\tx$ is paid from the \textbf{sponsor balance for gas} of $\contract$ (if it is sufficient) rather than from the sender's balance,
 若 \textbf{燃料资助余额} 不足以支付燃料消耗，$\tx$ 的执行将失败。
 %and the execution of $\tx$ would fail if the \textbf{sponsor balance for gas} cannot afford the gas consumption.
-当交易所需燃料费（即 $\tx_p\times\tx_g$）大于 $\min\set{\textbf{sponsor limit for gas fee}，\textbf{sponsor balance for gas}}$，补贴将不被提供，而交易发送方 $\sender{\tx}$ 应负责支付燃料消耗。
+当交易所需燃料费（即 $\tx_p\times\tx_g$）大于 $\min\set{\textbf{sponsor limit for gas fee}，\textbf{sponsor balance for gas}}$，赞助将不被提供，而交易发送方 $\sender{\tx}$ 应负责支付燃料消耗。
 %In case the transaction specifies a gas fee (i.e. $\tx_p\times\tx_g$) greater than $\min\set{\textbf{sponsor limit for gas fee}, \textbf{sponsor balance for gas}}$, there is no subsidy and the sender $\sender{\tx}$ should pay for the gas consumption as usual.
 
 \paragraph{存储抵押资助人}
 %\paragraph{Sponsor for storage collateral.}
 对一个 {\bf 存储抵押资助人} 域值非零的合约 $\contract$ 和调用该合约的交易 $\tx$，
 %For a contract $\contract$ with non-empty {\bf sponsor for collateral} and a transaction $\tx$ calling $\contract$,
-满足以下条件的 $\tx$ 有资格使用存储补贴：
+满足以下条件的 $\tx$ 有资格使用存储赞助：
 1） 交易发送方 $\senderf(\tx)$ 在 $\contract$ 的 \textbf{白名单} 中，
 
 ？2） 交易的 {\bf 存储上限} $\tx_\ell$ 不大于 $\contract$ 的 {\bf 存储抵押资助余额}。
@@ -106,7 +106,7 @@ $\tx$ 的燃料消耗将（在余额充足的前提下）从 $\contract$ 的 \te
 %The new value of \textbf{sponsor limit for gas fee} should be no less than the old sponsor's limit  
 除非原有的 \textbf{燃料资助余额} 不足以支付原有上限。
 %unless the old \textbf{sponsor balance for gas} cannot afford the old limit.
-此外，为补贴至少 $1000$ 笔调用 $\contract$ 的交易，转账金额应大于新上限的 $1000$ 倍。
+此外，为赞助至少 $1000$ 笔调用 $\contract$ 的交易，转账金额应大于新上限的 $1000$ 倍。
 %Moreover, the transferred fund should be $\ge 1000$ times of the new limit, so that it is sufficient to subsidize at least $1000$  transactions calling $\contract$. 
 若满足了上述条件，当前剩余的 \textbf{燃料资助余额} 将被退还给原 \textbf{燃料资助人}，
 %If the above conditions are satisfied, the remaining \textbf{sponsor balance for gas} will be refunded to the old \textbf{sponsor for gas},
