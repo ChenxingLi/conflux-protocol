@@ -2,55 +2,76 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Transaction Processing}
+\section{交易处理}
+%\section{Transaction Processing}
 \label{sec:tx_processing}
 
-\name implements the same virtual machine as Ethereum \cite{ETH_yellow}. 
-The execution of a transaction defines the transform function $\Upsilon(\st,\tx,\tau)$, which is similar with Ethereum's state transition function.
-In what follows we focus on the \name specific designs in the execution.
+\name 实现了与以太坊 \cite{ETH_yellow} 相同的虚拟机。
+%\name implements the same virtual machine as Ethereum \cite{ETH_yellow}. 
+一个交易的执行定义了转换函数 $\Upsilon(\st,\tx,\tau)$，其与以太坊的全局状态转换函数类似。
+%The execution of a transaction defines the transform function $\Upsilon(\st,\tx,\tau)$, which is similar with Ethereum's state transition function.
+在下文中我们将阐述 \name 有关交易执行的具体设计。
+%In what follows we focus on the \name specific designs in the execution.
 
-\subsection{Gas, Payment and Collateral}
+\subsection{燃料，支付和抵押}
+%\subsection{Gas, Payment and Collateral}
 \label{subsec:gas_and_pay}
 
-As defined in Section~\ref{sec:tx} every transaction $\tx$ has two fields of {\bf gasLimit} and {\bf gasPrice} that declare the specific amount of associated gas $\tx_g$ and the price $\tx_p$ of per unit gas.
-When starting the execution of a transaction $\tx$, the purchase of gas happens at the price $\tx_g \times \tx_p$ and the transaction $\tx$ is considered invalid if the actor responsible for the cost of gas consumption cannot afford such a purchase.
-% , i.e. $\sender{\tx}_b < \tx_g \times \tx_p$.
-\newversion{
-	Normally $\sender{\tx}$, the sender of $\tx$, is responsible for the cost of gas consumption. 
-	In case the transaction $\tx$ is calling a smart contract $\contract$ with sponsorship for gas consumption and $\tx$ is qualified for the subsidy as specified in Section~\ref{sec:sponsor}, 
-	$\contract$ is responsible for the purchase of gas if it has sufficient \textbf{sponsor balance for gas},
-	and otherwise the sender $\sender{\tx}$ is still responsible for the whole purchase of gas as if there were no sponsor at all.
-}
-Like in Ethereum, gas does not exist outside the execution of transactions.
+如同第 \ref{sec:tx} 节中的定义样，每笔交易 $\tx$ 的两个域 {\bf 燃料量} 和 {\bf 燃料价格} 标明交易所需燃料 $\tx_g$ 和燃料单位价格 $\tx_p$ 的具体数值。
+%As defined in Section~\ref{sec:tx} every transaction $\tx$ has two fields of {\bf gasLimit} and {\bf gasPrice} that declare the specific amount of associated gas $\tx_g$ and the price $\tx_p$ of per unit gas.
+开始执行一笔交易 $\tx$ 时，应支付的燃料总价为 $\tx_g \times \tx_p$；当负责支付燃料消耗费用的一方负担不起该费用时，交易 $\tx$ 将被视为无效。
+%When starting the execution of a transaction $\tx$, the purchase of gas happens at the price $\tx_g \times \tx_p$ and the transaction $\tx$ is considered invalid if the actor responsible for the cost of gas consumption cannot afford such a purchase.
+正常情况下，$\tx$ 的发送方 $\sender{\tx}$ 将承担燃料消耗费用。
+%Normally $\sender{\tx}$, the sender of $\tx$, is responsible for the cost of gas consumption. 
+当交易 $\tx$ 调用一个有燃料赞助的智能合约 $\contract$，且 $\tx$ （如第 \ref{sec:sponsor} 节中所写明的）有资格使用赞助，
+%In case the transaction $\tx$ is calling a smart contract $\contract$ with sponsorship for gas consumption and $\tx$ is qualified for the subsidy as specified in Section~\ref{sec:sponsor}, 
+若 $\contract$ 有足够的 \textbf{燃料资助余额}，$\contract$ 将负责支付燃料费用；否则，交易发送方 $\sender{\tx}$ 仍将承担所有燃料消耗费用。
+%$\contract$ is responsible for the purchase of gas if it has sufficient \textbf{sponsor balance for gas},and otherwise the sender $\sender{\tx}$ is still responsible for the whole purchase of gas as if there were no sponsor at all.
+与以太坊相似，燃料不存在于交易执行以外。
+%Like in Ethereum, gas does not exist outside the execution of transactions.
 
 
-	The unused gas can be refunded after the transaction $\tx$ is executed, but no more than a quarter of the total value spent on purchasing. 
-	Thus, the \emph{refundable amount of gas} $g^{\dagger}$ is the minimum of the \emph{legitimately remaining gas} $g'$ and a quarter of the \textbf{gasLimit} of $\tx$,
-	i.e. $g^{\dagger}\eqdef \min\set{g', \tx_g/4}$, 
-	where in principle no gas is refundable (i.e. $g^{\dagger} = g' = 0$) if the execution of $\tx$ fails due to the sender's fault. 
-	% The \emph{consumed amount of gas}\footnote{Here for simplicity we write $\gused(\cdot)$ as a function of $\tx$. However it is indeed a function defined on both $\tx$ and the world-state at the beginning of the execution of $\tx$. Thus, multiple occurrences of $\tx$ are considered as distinct inputs for this function and they may incur different amount of consumed gas.} $\gused(\tx)$ is defined as
-	% \begin{align*}
-	% 	\gused(\tx) \eqdef \begin{cases}
-	% 		\tx_g-g^{\dagger} & \mbox{if $\tx$ is executed}\\
-	% 		0 & \mbox{if $\tx$ is not executed (i.e. only when $R_z=2$ as in Section~\ref{sec:tx validate})}
-	% 	\end{cases} 
-	% \end{align*}
-	The actor who initially purchased the gas for $\tx$ will get the refund of $g^{\dagger}\times\tx_p$. And the \coinsign paid for the consumed gas is 
+未被使用的燃料将在交易 $\tx$ 执行后退回，但退回额度不超过购买燃料所花总价的四分之一。
+%The unused gas can be refunded after the transaction $\tx$ is executed, but no more than a quarter of the total value spent on purchasing. 
+因此，\emph{可退还燃料量} $g^{\dagger}$ 等于以下两个中更小的值：$\tx$ \textbf{燃料量} 的四分之一和 \emph{合理剩余燃料} $g'$。即，$g^{\dagger}\eqdef \min\set{g', \tx_g/4}$。
+%Thus, the \emph{refundable amount of gas} $g^{\dagger}$ is the minimum of the \emph{legitimately remaining gas} $g'$ and a quarter of the \textbf{gasLimit} of $\tx$,i.e. $g^{\dagger}\eqdef \min\set{g', \tx_g/4}$, 
+特别地，若发送方导致 $\tx$ 执行失败，则理论上没有燃料可退还（即 $g^{\dagger} = g' = 0$）。
+%where in principle no gas is refundable (i.e. $g^{\dagger} = g' = 0$) if the execution of $\tx$ fails due to the sender's fault. 
+最初为 $\tx$ 购买燃料的一方将收到退款 $g^{\dagger}\times\tx_p$。而支付给已消耗燃料的 \coinsign 为
+%The actor who initially purchased the gas for $\tx$ will get the refund of $g^{\dagger}\times\tx_p$. And the \coinsign paid for the consumed gas is 
 	%
 	\begin{align}
 		\left(\tx_g-g^{\dagger}\right)\times \tx_p.
 	\end{align}
 	%
-	If the $\tx$ is not executed (i.e. only when $R_z=2$ as in Section~\ref{sec:tx validate})), no gas will be charged. If the sender $\sender{\tx}$ can not afford gas fee, all its the remained balance of sender $\sender{\tx}$ will be charged as gas fee. The actual charged gas fee will be record in receipt $R_f$. 
+如果 $\tx$ 未被执行（即，如第 \ref{sec:tx validate} 中定义一般，仅当 $R_z=2$ 时），没有燃料需要被支付。
+	%If the $\tx$ is not executed (i.e. only when $R_z=2$ as in Section~\ref{sec:tx validate})), no gas will be charged. 
+若发送方 $\sender{\tx}$ 无法负担燃料费，发送方的全部余额将被用于支付燃料费，此实际收取的燃料费将被记录在收据 $R_f$ 中。
+	%If the sender $\sender{\tx}$ can not afford gas fee, all its the remained balance of sender $\sender{\tx}$ will be charged as gas fee. The actual charged gas fee will be record in receipt $R_f$. 
 
-	
-The charged gas fee is added to the reward pool for miners. Thus in general a higher gas price on a transaction would cost the sender more but also increase the chance of being processed timely.
 
-In computing the accumulated gas used of the whole block, the non-refundable gas $g^{\dagger} - g'$ is not taken into consideration. But in case the sender $\sender{\tx}$ can not afford gas fee, the gas used is considered as $\tx_g$, even if the actual charged gas fee is less than $\tx_p\times\tx_g$. The gas used is also recorded in receipt $R_g$. 
-%
-Thus the accumulated gas used of a block is intrinsically taking the summation of field $R_g$ over transaction receipts.
+支付完毕的燃料费将加入矿工奖励池。因此，更高的燃料价格使发送者花费更多的同时，也将增加该交易被及时处理的概率。
+%The charged gas fee is added to the reward pool for miners. Thus in general a higher gas price on a transaction would cost the sender more but also increase the chance of being processed timely.
 
-Every transactions also have a filed of \textbf{storage limit} that declare the maximum storage bytes $\tx_\ell$ increasing for the present transaction. Before transaction execution, besides gas fee and transferred value, the sender $\sender{\tx}$ must have enough balance for storage collateral for specified storage limit, i.e., $\tx_\ell\times\collateralperbyte\;\unit$. Unlike the gas fee, these collateral will not be charged or locked at this time. At the end of transaction execution, if the sender doesn't have enough balance paying for the increased storage collateral or the increased storage bytes of sender exceeds storage limit, the transaction execution fails. More details for collateral for storage is specified in section~\ref{sec:collateral}. 
+
+计算整个区块的累计燃料消耗时，不可退还的燃料 $g^{\dagger} - g'$ 将不被纳入考量。
+%In computing the accumulated gas used of the whole block, the non-refundable gas $g^{\dagger} - g'$ is not taken into consideration. 
+但当发送方 $\sender{\tx}$ 无法负担燃料费时，即使实际收取的燃料费少于 $\tx_p\times\tx_g$，我们也认为消耗的燃料量即是 $\tx_g$。
+%But in case the sender $\sender{\tx}$ can not afford gas fee, the gas used is considered as $\tx_g$, even if the actual charged gas fee is less than $\tx_p\times\tx_g$. The gas used is also recorded in receipt $R_g$. 
+因此，一个区块的累计燃料消耗本质上等于交易收据里 $R_g$ 域的总和。
+%Thus the accumulated gas used of a block is intrinsically taking the summation of field $R_g$ over transaction receipts.
+
+
+每笔交易都有一个 \textbf{存储上限} 域，表明当前交易可增加的最大存储字节 $\tx_\ell$。
+%Every transactions also have a filed of \textbf{storage limit} that declare the maximum storage bytes $\tx_\ell$ increasing for the present transaction. 
+执行交易前，除燃料费用和转账额以外，发送方 $\sender{\tx}$ 必须有足够余额为所需存储上限支付存储抵押，即 $\tx_\ell\times\collateralperbyte\;\unit$。
+%Before transaction execution, besides gas fee and transferred value, the sender $\sender{\tx}$ must have enough balance for storage collateral for specified storage limit, i.e., $\tx_\ell\times\collateralperbyte\;\unit$. 
+不同于燃料费，在执行交易前这些抵押将不被收取或锁定。
+%Unlike the gas fee, these collateral will not be charged or locked at this time. 
+在交易执行完成时，若发送方没有足够余额为实际增加的存储支付抵押，或实际增加的存储字节超过了存储上限，交易执行将失败。
+%At the end of transaction execution, if the sender doesn't have enough balance paying for the increased storage collateral or the increased storage bytes of sender exceeds storage limit, the transaction execution fails. 
+更多有关存储抵押的细节详见第 \ref{sec:collateral} 节。
+%More details for collateral for storage is specified in section~\ref{sec:collateral}. 
 
 \subsection{Pre-execution Validation}
 \label{sec:tx validate}

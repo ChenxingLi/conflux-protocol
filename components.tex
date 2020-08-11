@@ -369,7 +369,7 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 	%\item {\bf gasPrice:} A scalar value indicating the number of \unit to be paid per unit of gas that is consumed as a result of the execution of $\tx$. Formally denoted by $\tx_p\in\N_{256}$.
 
 	\item {\bf 燃料量(gasLimit):} 
-	一个标量值，记作 $\tx_g\in\N_{256}$，表示交易发送方愿意为执行交易 $\tx$ 所花费的燃料\emph{总量}。该笔金额将在最开始支付完成，先于其他所有计算之前，并不允许后续追加或退款。交易的发送方负责保证交易的 \emph{燃料连量} 不会过高，以避免不必要的燃料浪费。
+	一个标量值，记作 $\tx_g\in\N_{256}$，表示交易发送方愿意为执行交易 $\tx$ 所花费的燃料\emph{总量}。该笔金额将在最开始支付完成，先于其他所有计算之前，并不允许后续追加或退款。交易的发送方负责保证交易的 \emph{燃料量} 不会过高，以避免不必要的燃料浪费。
 	%\item {\bf gasLimit:} A scalar value indicating the \emph{total} amount of gas paid for the cost of the execution of $\tx$. This is paid up-front, before any actual computation is done, and may not be increased or refunded later. 
 	%Formally denoted by $\tx_g\in\N_{256}$.
 	%It is the transaction sender's responsibility to avoid any extravagance caused by an unnecessarily high {\bf gasLimit}.
