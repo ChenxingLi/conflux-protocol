@@ -244,28 +244,36 @@
 \end{align}
 
 
-\subsubsection{Execution Substate}
+\subsubsection{执行子状态}
+%\subsubsection{Execution Substate}
 \label{subsubsec:substate}
 
-The \emph{transaction substate} $A$ is a five tuple which accrues intermediate information during execution. 
+\emph{交易子状态} $A$ 是一个在执行中积累中间信息的三元组。
+%The \emph{transaction substate} $A$ is a five tuple which accrues intermediate information during execution. 
 \begin{align}
 	A\eqdef \left( A_{\bf s}, A_{\bf l}, A_{\bf t}\right)
 \end{align}
-The components of $A$ are defined as follows: 
+$A$ 的组成部分定义如下：
+%The components of $A$ are defined as follows: 
 \begin{itemize}[nosep]
-	\item $A_{\bf s}$ is the self-destruct set of accounts that will be discarded upon the transaction's completion.
+	\item $A_{\bf s}$ 是一个边执行边自毁的账户集合，在交易完成时其将被遗弃。
+	%\item $A_{\bf s}$ is the self-destruct set of accounts that will be discarded upon the transaction's completion.
 
-	\item $A_{\bf l}$ is the log series consisting of indexable ``checkpoints'' in the VM code execution, allowing light clients to track the execution of a contract.
+	\item $A_{\bf l}$ 是一个虚拟机代码执行中产生的可索引日志序列，其允许轻量级客户端追踪一个合约的执行。
+	%\item $A_{\bf l}$ is the log series consisting of indexable ``checkpoints'' in the VM code execution, allowing light clients to track the execution of a contract.
 
-	\item $A_{\bf t}$ is the set of touched accounts, of which the empty ones will be deleted on the transaction's completion.
+	\item $A_{\bf t}$ 是一个交易所涉及账户的集合，其中空账户将在交易完成时被删除。
+	%\item $A_{\bf t}$ is the set of touched accounts, of which the empty ones will be deleted on the transaction's completion.
 \end{itemize}
 
-The empty substate $A^0$, which is also the initial substate, has no self-destructs, no logs, no touched accounts, and zero refund. Formally, $A^0$ is defined as
+空白的子状态 $A^0$，也即初始子状态，没有账户自毁记录、日志，和所涉及账户记录。$A^0$ 的正式定义为
+%The empty substate $A^0$, which is also the initial substate, has no self-destructs, no logs, no touched accounts, and zero refund. Formally, $A^0$ is defined as
 \begin{align}
 	A^0\eqdef \left( \varnothing, \emptystring, \varnothing\right)
 \end{align}
 
-For any two substate $A^1$ and $A^2$, the accrued substate $A\eqdef A^1\Cup A^2$ is defined by 
+对任意两个子状态 $A^1$ 和 $A^2$，两者积累的子状态 $A\eqdef A^1\Cup A^2$ 定义如下：
+%For any two substate $A^1$ and $A^2$, the accrued substate $A\eqdef A^1\Cup A^2$ is defined by 
 \begin{align}
 	A_{\bf s} &\eqdef A^1_{\bf s} \cup A^2_{\bf s} \\ 
 	A_{\bf l} &\eqdef A^1_{\bf l} \cdot A^2_{\bf l} \\
