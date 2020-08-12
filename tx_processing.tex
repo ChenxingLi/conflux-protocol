@@ -8,25 +8,23 @@
 
 \name 实现了与以太坊 \cite{ETH_yellow} 相同的虚拟机。
 %\name implements the same virtual machine as Ethereum \cite{ETH_yellow}. 
-一个交易的执行定义了转换函数 $\Upsilon(\st,\tx,\tau)$，其与以太坊的全局状态转换函数类似。
-%The execution of a transaction defines the transform function $\Upsilon(\st,\tx,\tau)$, which is similar with Ethereum's state transition function.
+一个交易的执行定义了转换函数 $\Upsilon(\st,\tx,\vec{L})$，其与以太坊的全局状态转换函数类似。
+%The execution of a transaction defines the transform function $\Upsilon(\st,\tx,\vec{L})$, which is similar with Ethereum's state transition function.
+
+\subsection{Overview}
+
 在下文中我们将阐述 \name 有关交易执行的具体设计。
 %In what follows we focus on the \name specific designs in the execution.
 
-\subsection{燃料，支付和抵押}
-%\subsection{Gas, Payment and Collateral}
+\paragraph{燃料与支付}
 \label{subsec:gas_and_pay}
 
 如同第 \ref{sec:tx} 节中的定义样，每笔交易 $\tx$ 的两个域 {\bf 燃料量} 和 {\bf 燃料价格} 标明交易所需燃料 $\tx_g$ 和燃料单位价格 $\tx_p$ 的具体数值。
 %As defined in Section~\ref{sec:tx} every transaction $\tx$ has two fields of {\bf gasLimit} and {\bf gasPrice} that declare the specific amount of associated gas $\tx_g$ and the price $\tx_p$ of per unit gas.
 开始执行一笔交易 $\tx$ 时，应支付的燃料总价为 $\tx_g \times \tx_p$；当负责支付燃料消耗费用的一方负担不起该费用时，交易 $\tx$ 将被视为无效。
 %When starting the execution of a transaction $\tx$, the purchase of gas happens at the price $\tx_g \times \tx_p$ and the transaction $\tx$ is considered invalid if the actor responsible for the cost of gas consumption cannot afford such a purchase.
-正常情况下，$\tx$ 的发送方 $\sender{\tx}$ 将承担燃料消耗费用。
-%Normally $\sender{\tx}$, the sender of $\tx$, is responsible for the cost of gas consumption. 
-当交易 $\tx$ 调用一个有燃料赞助的智能合约 $\contract$，且 $\tx$ （如第 \ref{sec:sponsor} 节中所写明的）有资格使用赞助，
-%In case the transaction $\tx$ is calling a smart contract $\contract$ with sponsorship for gas consumption and $\tx$ is qualified for the subsidy as specified in Section~\ref{sec:sponsor}, 
-若 $\contract$ 有足够的 \textbf{燃料资助余额}，$\contract$ 将负责支付燃料费用；否则，交易发送方 $\sender{\tx}$ 仍将承担所有燃料消耗费用。
-%$\contract$ is responsible for the purchase of gas if it has sufficient \textbf{sponsor balance for gas},and otherwise the sender $\sender{\tx}$ is still responsible for the whole purchase of gas as if there were no sponsor at all.
+正常情况下，$\tx$ 的发送方 $\sender{\tx}$ 将承担燃料消耗费用。但燃料消耗可能由交易调用的合约赞助（详见下文）。
+%Normally $\sender{\tx}$, the sender of $\tx$, is responsible for the cost of gas consumption. But the gas consumption maybe sponsored by called contract sometimes. (See the following paragraph for details.) 
 与以太坊相似，燃料不存在于交易执行过程以外。
 %Like in Ethereum, gas does not exist outside the execution of transactions.
 
@@ -40,9 +38,9 @@
 最初为 $\tx$ 购买燃料的一方将收到退款 $g^{\dagger}\times\tx_p$。而支付给已消耗燃料的 \coinsign 为
 %The actor who initially purchased the gas for $\tx$ will get the refund of $g^{\dagger}\times\tx_p$. And the \coinsign paid for the consumed gas is 
 	%
-	\begin{align}
-		\left(\tx_g-g^{\dagger}\right)\times \tx_p.
-	\end{align}
+\begin{align}
+	\left(\tx_g-g^{\dagger}\right)\times \tx_p.
+\end{align}
 	%
 如果 $\tx$ 未被执行（即，如第 \ref{sec:tx validate} 中定义一般，仅当 $R_z=2$ 时），没有燃料需要被支付。
 	%If the $\tx$ is not executed (i.e. only when $R_z=2$ as in Section~\ref{sec:tx validate})), no gas will be charged. 
@@ -59,11 +57,13 @@
 但当发送方 $\sender{\tx}$ 无法负担燃料费时，即使实际收取的燃料费少于 $\tx_p\times\tx_g$，我们也认为消耗的燃料量即是 $\tx_g$。
 %But in case the sender $\sender{\tx}$ can not afford gas fee, the gas used is considered as $\tx_g$, even if the actual charged gas fee is less than $\tx_p\times\tx_g$. The gas used is also recorded in receipt $R_g$. 
 
+\paragraph{存储上限和存储抵押}
+%\paragraph{Storage Limit and Storage Collateral}
 
 每笔交易都有一个 \textbf{存储上限} 域，表明当前交易可增加的最大存储字节 $\tx_\ell$。
 %Every transactions also have a filed of \textbf{storage limit} that declare the maximum storage bytes $\tx_\ell$ increasing for the present transaction. 
-执行交易前，除燃料费用和转账额以外，发送方 $\sender{\tx}$ 必须有足够余额为所需存储上限支付存储抵押，即 $\tx_\ell\times\collateralperbyte\;\unit$。
-%Before transaction execution, besides gas fee and transferred value, the sender $\sender{\tx}$ must have enough balance for storage collateral for specified storage limit, i.e., $\tx_\ell\times\collateralperbyte\;\unit$. 
+执行交易前，除燃料费用和转账额以外，发送方 $\sender{\tx}$ 必须有足够余额为所需 \textbf{存储上限} 支付存储抵押，即 $\tx_\ell\times\collateralperbyte\;\unit$。
+%Before transaction execution, besides gas fee and transferred value, the sender $\sender{\tx}$ must have enough balance for storage collateral for specified \textbf{storageLimit}, i.e., $\tx_\ell\times\collateralperbyte\;\unit$. 
 不同于燃料费，在执行交易前这些抵押将不被收取或锁定。
 %Unlike the gas fee, these collateral will not be charged or locked at this time. 
 在交易执行完成时，若发送方没有足够余额为实际增加的存储支付抵押，或实际增加的存储字节超过了存储上限，交易执行将失败。
@@ -71,7 +71,37 @@
 更多有关存储抵押的细节详见第 \ref{sec:collateral} 节。
 %More details for collateral for storage is specified in section~\ref{sec:collateral}. 
 
-\subsection{执行前验证}
+\paragraph{赞助}
+%\paragraph{Sponsorship}
+
+当交易 $\tx$ 调用一个带有 \textbf{燃料资助人} 的智能合约 $\contract$，且 $\tx$ 满足 \cref{eq:whitelist} 中定义的函数 $\mathsf{Whitelist}(\cdot)$ 要求而有资格使用该赞助时，
+%In case the transaction $\tx$ is calling a smart contract $\contract$ with \textbf{sponsor for gas} and $\tx$ is qualified for the subsidy as checked in function $\mathsf{Whitelist}(\cdot)$ defined in \cref{eq:whitelist}, 
+若 $\contract$ 有足够的 \textbf{燃料资助余额} 且交易 \textbf{燃料上限} $\tx_g$ 不超过 {\bf 燃料资助上限}，
+$\contract$ 将负责购买燃料；
+%$\contract$ is responsible for the purchase of gas if it has sufficient \textbf{sponsor balance for gas} and the transaction \textbf{gasLimit} $\tx_g$ does not exceed the {\bf sponsor limit for gas}, 
+否则，交易发送方 $\sender{\tx}$ 仍负责购买燃料全额。
+%and otherwise the sender $\sender{\tx}$ is still responsible for the whole purchase of gas as if there were no sponsor at all. 
+我们正式定义函数 $\mathsf{GasElig}(\st,\tx)$ 来检查交易 $\tx$ 是否有资格使用燃料赞助，同时定义 $\mathsf{GasSpr}(\st,\tx)$ 来检查实际上 $\tx$ 是否使用了燃料赞助。
+%Formally, we define function $\mathsf{GasElig}(\st,\tx)$ to check whether transaction $\tx$ is eligible for gas consumption sponsorship and define function $\mathsf{GasSpr}(\st,\tx)$ to check whether $\tx$ is actually sponsored for gas consumption. 
+\begin{align}
+\mathsf{GasElig}(\st,\tx)&\eqdef \quad \mathrm{Type}_{\tx_a}=\typecontract \;\wedge\; \mathsf{Whitelist}(\st,\sender{\tx},\contract) \;\wedge\; \st[\tx_a]_p[\mathsf{gas}]_a\neq 0 \;\wedge\; \tx_g\times\tx_p \le \st[\tx_a]_p[\mathsf{limit}] \\
+\mathsf{GasSpr}(\st,\tx) &\eqdef\quad  \mathsf{GasElig}(\st,\tx) \;\wedge\; \st[\tx_a]_p[{\sf gas}]_b\ge \tx_g\times\tx_p
+\end{align}
+%
+其中，函数 $\mathsf{Whitelist}(\cdot)$ 在 \cref{eq:whitelist} 有详细定义。
+%where function $\mathsf{Whitelist}(\cdot)$ is defined in \cref{eq:whitelist}. 
+
+若一个合约存在 \textbf{存储抵押资助人}， 存储抵押费用也能被合约赞助。正式定义下，
+%If a contract has \textbf{sponsor for collateral}, the storage collateral can also be sposnored by a contract. Formally,
+\begin{align}
+\mathsf{ColElig}(\st,\tx) &\eqdef \quad \mathrm{Type}_{\tx_a}=\typecontract \;\wedge\; \mathsf{Whitelist}(\st,\sender{\tx},\contract) \;\wedge\; \st[\tx_a]_p[\mathsf{col}]_a\neq 0 \\
+\mathsf{ColSpr}(\st,\tx) &\eqdef\quad  \mathsf{ColElig}(\st,\tx) \;\wedge\; \st[\tx_a]_p[{\sf col}]_b\ge \tx_\ell\times \collateralperbyte
+\end{align}
+
+\subsection{交易执行}
+%\subsection{Transaction Execution}
+
+\subsubsection{执行前验证}
 %\subsection{Pre-execution Validation}
 \label{sec:tx validate}
 
@@ -109,27 +139,6 @@
 若 $\tx$ 通过了以上交易前检查，$\tx$ 的执行过程如本节余下内容所述。
 %If $\tx$ passes all the above pre-execution checks, the execution of $\tx$ is as specified in the rest of this section.
 
-\subsection{交易执行}
-%\subsection{Transaction Execution}
-
-\subsubsection{被赞助资格}
-%\subsubsection{Eligibility for sponsorship}
-
-当 $\tx$ 调用一个合约 $\contract$ 时，交易执行的燃料费和存储抵押可由合约 $\contract$ 赞助。
-%When $\tx$ is calling a contract $\contract$, the gas fee and storage collateral during the transaction execution could be sponsored by the contract $\contract$. 
-若发送方 $\sender{\tx}$ 在合约 $\contract$ 的 {\bf 赞助人白名单} 中，当前交易的燃料费不超过合约的 {\bf 燃料资助上限}，且合约 $\contract$ 带有 {\bf 燃料资助人}，交易  $\tx$  有资格使用燃料赞助。正式定义下，
-%If the sender $\sender{\tx}$ is in the {\bf sponsor whitelist} of contract $\contract$, the gas fee of the current transaction does not exceed the {\bf sponsor limit for gas} of contract and contract $\contract$ has a {\bf sponsor for gas}, transaction $\tx$ is eligible for sponsorship on gas consumption. Formally, we define 
-\begin{align}
-	\mathsf{GasElig}(\st,\tx)\eqdef \quad \mathrm{Type}_{\tx_a}=\typecontract \;\wedge\; \mathsf{Whitelist}(\st,\sender{\tx},\contract) \;\wedge\; \st[\tx_a]_p[\mathsf{gas}]_a\neq 0 \;\wedge\; \tx_g\times\tx_p \le \st[\tx_a]_p[\mathsf{limit}] 
-\end{align}
-其中，函数 $\mathsf{Whitelist}(\cdot)$ 在 \cref{eq:whitelist} 中有所定义。
-%where function $\mathsf{Whitelist}(\cdot)$ is defined in \cref{eq:whitelist}. 
-
-若发送方 $\sender{\tx}$ 在合约 $\contract$ 的 {\bf 赞助人白名单} 中，且合约 $\contract$ 带有 {\bf 存储抵押赞助人}， 交易 $\tx$ 也有资格使用存储抵押赞助。
-%If the sender $\sender{\tx}$ is in the {\bf sponsor whitelist} of contract $\contract$ and contract $\contract$ has a {\bf sponsor for collateral}, transaction $\tx$ is also eligible for sponsorship on storage collateral.
-\begin{align}
-	\mathsf{ColElig}(\st,\tx)\eqdef \quad \mathrm{Type}_{\tx_a}=\typecontract \;\wedge\; \mathsf{Whitelist}(\st,\sender{\tx},\contract) \;\wedge\; \st[\tx_a]_p[\mathsf{col}]_a\neq 0
-\end{align}
 
 \subsubsection{预处理}
 %\subsubsection{Preprocessing}
@@ -161,9 +170,6 @@
 %The up-front payment of a transaction $\tx$ first figures out whether the gas consumption is sponsored. 
 若 $\tx$ 有资格使用燃料赞助，且其调用的合约有足够的 \textbf{燃料资助余额}，则交易 $\tx$ 有燃料赞助。
 %$\tx$ is sponsored on gas consumption if $\tx$ is eligible for sponsorship on gas consumption and the calling contract has sufficient \textbf{sponsor balance for gas fee}. 
-\begin{align}
-	\mathsf{GasSpr}(\st,\tx) \eqdef\quad  \mathsf{GasElig}(\st,\tx) \;\wedge\; \st[\tx_a]_p[{\sf gas}]_b\ge \tx_g\times\tx_p
-\end{align}
 \begin{itemize}
 	\item 若 $\tx$ 的燃料消耗使用了赞助，燃料费支付后的世界状态 $\st^{**}$ 定义如下：
 	%\item If the gas consumption of $\tx$ is sponsored, the world-state $\st^{**}$ after gas consumption payment is as follows: 
@@ -198,7 +204,6 @@
 %Otherwise, the sender $\sender{\tx}$ is the owner of modified entries and has the obligation to pay corresponding storage collateral. 
 %
 \begin{align}
-	\mathsf{ColSpr}(\st,\tx) &\eqdef\quad  \mathsf{ColElig}(\st,\tx) \;\wedge\; \st[\tx_a]_p[{\sf col}]_b\ge \tx_\ell\times 10^{18}/1024 \\
 	\mathsf{ColOwner}(\st,\tx) &\eqdef\left\{ \begin{array}{ll}
 		\tx_a & \text{if } \mathsf{ColSpr}(\st,\tx) = \true \\ 
 		\sender{\tx} & \text{if } \mathsf{ColSpr}(\st,\tx) = \false \\ 
@@ -236,11 +241,18 @@
 
 其他情况下，例外因发送方 $\sender{\tx}$ 而产生。
 %In other cases, sender $\sender{\tx}$ is responsible for the exception. 
-例外所造成的世界状态是 $\st'\eqdef \st^{**}$，而收据由以下项组成（其中 $R'$ 表示上一笔交易的收据）：
-%The resultant world-state is $\st'\eqdef \st^{**}$ and the receipt is composed as follows (where $R'$ refers the receipt of last transaction):
+例外所造成的世界状态将从 $\st'$ 恢复为 $\st^{**}$。若发送方存在（即 $\st[\sender{\tx}]\neq\varnothing$），则收据由以下项组成：
+%The resultant world-state is $\st'$ is reverted to $\st^{**}$ and the receipt is composed as follows if sender is non-existent. (i.e. $\st[\sender{\tx}]\neq\varnothing$).
 \begin{align}
 	&R_u=R'_u+\tx_g && R_f=\min\{\tx_g\times\tx_p,\st[\sender{\tx}]_b\} && R_g=\mathsf{GasElig}(\st,\tx) && R_{\bf l}=\emptystring \\
 	&R_z=1 && R_s=0 && R_{\bf o}=\emptystring && R_{\bf i}=\emptystring
+\end{align}
+
+若例外因发送方 $\sender{\tx}$ 而产生，且发送方不存在，例外所造成的世界状态将从 $\st'$ 恢复为 $\st$，收据如下：
+%If sender $\sender{\tx}$ is responsible for the exception and the sender is empty, the resultant world-state is $\st'$ is reverted to $\st$. The receipt is composed as follows
+\begin{align}
+&R_u=R'_u && R_f=0 && R_g=0 && R_{\bf l}=\emptystring \\
+&R_z=2 && R_s=0 && R_{\bf o}=\emptystring && R_{\bf i}=\emptystring
 \end{align}
 
 
@@ -249,9 +261,9 @@
 \label{subsubsec:substate}
 
 \emph{交易子状态} $A$ 是一个在执行中积累中间信息的三元组。
-%The \emph{transaction substate} $A$ is a five tuple which accrues intermediate information during execution. 
+%The \emph{transaction substate} $A$ is a three tuple which accrues intermediate information during execution. 
 \begin{align}
-	A\eqdef \left( A_{\bf s}, A_{\bf l}, A_{\bf t}\right)
+	A\eqdef \left( A_{\bf s}, A_{\bf l}, A_{\bf c}\right)
 \end{align}
 $A$ 的组成部分定义如下：
 %The components of $A$ are defined as follows: 
@@ -262,7 +274,10 @@ $A$ 的组成部分定义如下：
 	\item $A_{\bf l}$ 是一个虚拟机代码执行中产生的可索引日志序列，其允许轻量级客户端追踪一个合约的执行。
 	%\item $A_{\bf l}$ is the log series consisting of indexable ``checkpoints'' in the VM code execution, allowing light clients to track the execution of a contract.
 
-	\item $A_{\bf t}$ 是一个交易所涉及账户的集合，其中空账户将在交易完成时被删除。
+	\item $A_{\bf c}$ 是一个键值对集合，记录着每个地址的存储抵押变化值。与世界状态相似，我们用 $A_{\bf c}[k]=\varnothing$ 表示键 $k$ 不存在的情况，并使用 $A_{\bf c}[k]=0$ 简代 $A_{\bf c}[k]=\varnothing$。
+	%\item $A_{\bf c}$ is the set of key-value pairs for the storage collateral changes for each address. Similar with the world state, we write $A_{\bf c}[k]=\varnothing$ for the case that the key $k$ does not exist and regard $A_{\bf c}[k]=\varnothing$ as $A_{\bf c}[k]=0$.
+
+	%\item $A_{\bf t}$ 是一个交易所涉及账户的集合，其中空账户将在交易完成时被删除。
 	%\item $A_{\bf t}$ is the set of touched accounts, of which the empty ones will be deleted on the transaction's completion.
 \end{itemize}
 
@@ -277,7 +292,8 @@ $A$ 的组成部分定义如下：
 \begin{align}
 	A_{\bf s} &\eqdef A^1_{\bf s} \cup A^2_{\bf s} \\ 
 	A_{\bf l} &\eqdef A^1_{\bf l} \cdot A^2_{\bf l} \\
-	A_{\bf t} &\eqdef A^1_{\bf t} \cup A^2_{\bf t} 
+	\forall a\in\B_{160},\; A_{\bf c}[a] & \eqdef A^1_{\bf c}[a]+A^2_{\bf c}[a]
+	% A_{\bf t} &\eqdef A^1_{\bf t} \cup A^2_{\bf t} 
 \end{align}
 
 
@@ -288,11 +304,11 @@ then {\name} evaluates the \emph{post-execution provisional state} $\st^P$ from 
 %
 The gas available for the proceeding computation is $g\eqdef \tx_g-g_0$, where $g_0$ is the intrinsic cost of $\tx$ as in (\ref{def:g0}). 
 
-We define the tuple of post-execution provisional state $\st^{P}$, remaining gas $g'$, accrued substate $A$ and status code $z$:
+We define the tuple of post-execution provisional state $\st^{P}$, remaining gas $g$, accrued substate $A$ and status code $z$:
 \begin{align}\label{def:transform}
 	(\st^{P},g',A,z)\eqdef
 	\begin{cases}
-		\creation(\st^0,\sender{\tx},\sender{\tx},\emptystring, \mathsf{ColOwner}(\st,\tx),g,\tx_p,\tx_v,\tx_{\bf i},0,\top) &  \tx_a=\varnothing \\
+		\creation(\st^0,\sender{\tx},\sender{\tx},\emptystring, \mathsf{ColOwner}(\st,\tx),g,\tx_p,\tx_v,\tx_{\bf i},0,\zeta,\top) &  \tx_a=\varnothing \\
 		\execution(\st^0,\sender{\tx},\sender{\tx},\tx_a,\emptystring,\mathsf{ColOwner}(\st,\tx),\tx_a,g,\tx_p,\tx_v,\tx_v,\tx_{\bf d},0,\top) & \tx_a\neq\varnothing
 	\end{cases}
 \end{align}
@@ -314,8 +330,8 @@ Let $i\eqdef \mathsf{ColOwner}(\st,\tx)$ be the address who owns modified storag
 	\end{cases}
 \end{align}
 %
-Notice that $\st^P[i]_o-\st^0[i]_o$ is the incremental storage collateral during execution.
-If $\st^P[i]_o-\st^0[i]_o>\min\{v,\tx_\ell\times 10^{18}/1024\}$, then the execution fails because of exceeding the storage limit, 
+Notice that $A_{\bf c}[i]$ is the incremental storage collateral during execution.
+If $A_{\bf c}[i]>\min\{v,\tx_\ell\times 10^{18}/1024\}$, then the execution fails because of not enough balance for collateral or exceeding the storage limit, 
 and all the modified state will be reverted to $\st^0$, 
 i.e. $\st'\eqdef\st^0$. 
 Let $R'$ denote the receipt of last transaction.
@@ -331,25 +347,19 @@ The storage collateral in account state is also updated at this time.
 
 \begin{align}
 	&\st^1  \eqdef \st^{P} \qquad \mbox{  except:}\\
-	&\forall a \in \B_{160} \text{ with } \st^{P}[a]_o\neq\st^0[a]_o, \\
+	&\forall a \in \B_{160} \text{ with }  A_{\bf c}[a]\neq 0, \\
 	&\quad \begin{cases}
-	\st^1[a]_p[{\sf col}]_b \eqdef \st^{P}[a]_p[{\sf col}]_b - (\st^{P}[a]_o-\st^0[a]_o) & \mbox{if $a$ refers to a contract account, i.e. $\mathsf{Type}_{a}=\typecontract$} \\
-	\st^1[a]_b \eqdef \st^{P}[a]_b - (\st^{P}[a]_o-\st^0[a]_o) & \mbox{if $a$ refers to a normal account, i.e. $\mathsf{Type}_{a}= \typenormal$}
+	\st^1[a]_p[{\sf col}]_b \eqdef \st^{P}[a]_p[{\sf col}]_b + f(a) & \mbox{if $a$ refers to a contract account, i.e. $\mathsf{Type}_{a}=\typecontract$} \\
+	\st^1[a]_b \eqdef \st^{P}[a]_b + f(a) & \mbox{if $a$ refers to a normal account, i.e. $\mathsf{Type}_{a}= \typenormal$}
 	\end{cases}\\
-	&\st^1[a_{\sf stake}]_{\bf s}[k_4] \eqdef \st^P[a_{\sf stake}]_{\bf s}[k_4] + \sum_{a\in \B_{160}}(\st^{P}[a]_o-\st^0[a]_o) \\
+	& \st^1[a]_o \eqdef \st^P[a]_o - f(a)\\ 
+	&\st^1[a_{\sf stake}]_{\bf s}[k_3] \eqdef \st^P[a_{\sf stake}]_{\bf s}[k_3] + \sum_{a\in \B_{160}}(f(a) + A_{\bf c}[a]) \\
+	&\st^1[a_{\sf stake}]_{\bf s}[k_4] \eqdef \st^P[a_{\sf stake}]_{\bf s}[k_4] + \sum_{a\in \B_{160}}A_{\bf c}[a] \\
 	&\mbox{where:}  \\
 	&a_{\sf stake} \eqdef \stakingcontract \\ 
-	&k_4 \eqdef {\sf [total\char`_storage\char`_tokens]_{\sf ch}} 
-\end{align}
-
-\paragraph{Sponsor balance for collateral refund.}
-
-After refunding collateral for storage, the sponsor balance for collateral of all the destructed contract are refunded to their sponsor.
-
-\begin{align}
-	&\st^2  \eqdef \st^1 \qquad \mbox{  except:}\\
-	&\forall a \in \B_{160},\;  \st^2[a]_b\eqdef \st^1[a]_b + \sum_{a'\in A_{\bf s}} \mathbb{I}(\st^1[a']_p[{\sf col}]_a=a)\times \st^1[a']_p[{\sf col}]_b \\
-	&\forall a' \in A_{\bf s},\; \st^2[a']_p[{\sf col}]_b\eqdef 0
+	&k_3 \eqdef {\sf [total\char`_issued\char`_tokens]_{\sf ch}}  \\ 
+	&k_4 \eqdef {\sf [total\char`_storage\char`_tokens]_{\sf ch}}  \\ 
+	& f(a) \eqdef \min\{-A_{\bf c}[a], \st^P_o[a]\}
 \end{align}
 
 
@@ -360,13 +370,55 @@ The \emph{refundable amount of gas} $g^{\dagger}$ is the minimum of the \emph{le
 The refund of gas fee is applied on world-state $\st^{*}$ and results in $\st'\eqdef \Upsilon(\st,\tx)$.
 
 \begin{align}
-	& \st'  \eqdef \st^2 \qquad \mbox{  except:}\\
+	& \st^2  \eqdef \st^1 \qquad \mbox{  except:}\\
 	& \quad \begin{cases} 
-		\st'\left[\tx_a\right]_p[{\sf gas}]_b \eqdef \st^2\left[\tx_a\right]_p[{\sf gas}]_b+g^{\dagger}\times \tx_p 
+		\st^2\left[\tx_a\right]_p[{\sf gas}]_b \eqdef \st^1\left[\tx_a\right]_p[{\sf gas}]_b+g^{\dagger}\times \tx_p 
 		& \mbox{if $\mathsf{GasSpr}(\st,\tx)=\true$}\\
-		\st' \left[\sender{\tx}\right]_b \eqdef \st^2\left[\sender{\tx}\right]_b + g^{\dagger}\times \tx_p 
+		\st^2 \left[\sender{\tx}\right]_b \eqdef \st^1\left[\sender{\tx}\right]_b + g^{\dagger}\times \tx_p 
 		& \mbox{if $\mathsf{GasSpr}(\st,\tx)=\false$}
 	\end{cases} 
+\end{align}
+
+\paragraph{Killed contract processing} The sponsor mechanism and collateral mechanism bring additional tasks in contract destruction. First, for all the killed contract, we refund the collateral for code and storage entries to the corresponding owner. 
+\begin{align}
+& \st^3  \eqdef \st^2 \qquad \mbox{  except:}\\
+& \forall a \in A_{\bf s},\; \st^2[a]_{\bf s} \eqdef \varnothing \\
+&\forall a \in \B_{160} \text{ with }  A^*_{\bf c}[a]\neq 0, \\
+&\quad \begin{cases}
+\st^3[a]_p[{\sf col}]_b \eqdef \st^2[a]_p[{\sf col}]_b + f(a) & \mbox{if $a$ refers to a contract account, i.e. $\mathsf{Type}_{a}=\typecontract$} \\
+\st^3[a]_b \eqdef \st^2[a]_b + f(a) & \mbox{if $a$ refers to a normal account, i.e. $\mathsf{Type}_{a}= \typenormal$}
+\end{cases}\\
+& \st^3[a]_o \eqdef \st^2[a]_o - f(a)\\ 
+&\st^3[a_{\sf stake}]_{\bf s}[k_3] \eqdef \st^2[a_{\sf stake}]_{\bf s}[k_3] + \sum_{a\in \B_{160}}(f(a) + A^*_{\bf c}[a]) \\
+&\st^3[a_{\sf stake}]_{\bf s}[k_4] \eqdef \st^2[a_{\sf stake}]_{\bf s}[k_4] + \sum_{a\in \B_{160}}A^*_{\bf c}[a] \\
+& A' \eqdef A \Cup A^* \\ 
+&\mbox{where:}  \\
+&a_{\sf stake} \eqdef \stakingcontract \\ 
+&k_3 \eqdef {\sf [total\char`_issued\char`_tokens]_{\sf ch}}  \\ 
+&k_4 \eqdef {\sf [total\char`_storage\char`_tokens]_{\sf ch}}  \\ 
+& f(a) \eqdef \min\{-A^*_{\bf c}[a], \st^2_o[a]\} \\
+& A^* \eqdef A^0 \qquad \mbox{  except:}\\
+& \forall a \in \B^{160}, A^*[a]_{\bf c} = - \collateralperbyte \times \sum_{a'\in A_{\bf s}}\left(\mathbb{I}(\st^2[a']_{w}=a) \times |\st^2[a']_{\bf p}| + \sum_{k\in \B_*} \mathbb{I}(\st^2[a']_{\bf s}[k]_o=a)\times 64\right) 
+\end{align}
+
+Then we refund the sponsor balance for all the killed contract. 
+%
+\begin{align}
+&\st^4  \eqdef \st^3 \qquad \mbox{  except:}\\
+&\forall a \in \B_{160},\;  \st^4[a]_b\eqdef \st^3[a]_b + \sum_{a'\in A_{\bf s}} \left(\mathbb{I}(\st^3[a']_p[{\sf col}]_a=a)\times \st^3[a']_p[{\sf col}]_b + \mathbb{I}(\st^3[a']_p[{\sf gas}]_a=a)\times \st^3[a']_p[{\sf gas}]_b \right)\\
+&\forall a' \in A_{\bf s},\; \st^4[a']_p[{\sf col}]_b\eqdef 0 \\
+&\forall a' \in A_{\bf s},\; \st^4[a']_p[{\sf gas}]_b\eqdef 0
+\end{align}
+
+Then we delete all the contracts and burn all the rest balance 
+%
+\begin{align}
+&\st' \eqdef \st^4 \qquad \mbox{  except:} \\ 
+&\forall a \in A_{\bf s}, \st'[a] = \varnothing \\ 
+&\st'[a_{\sf stake}]_{\bf s}[k_3] \eqdef \st^4[a_{\sf stake}]_{\bf s}[k_3] - \sum_{a\in A_{\bf s}} (\st[a]_b + \st[a]_t) \\
+&\mbox{where:}  \\
+&a_{\sf stake} \eqdef \stakingcontract \\ 
+&k_3 \eqdef {\sf [total\char`_issued\char`_tokens]_{\sf ch}}  
 \end{align}
 
 \paragraph{Transaction Receipt.} 
@@ -377,12 +429,12 @@ Supposing that $R'$ is the receipt of last transaction,
 the receipt of current transaction will be as follows:
 \begin{align}
 	\begin{array}{llll}
-		R_u=R'_u+g' & R_f = (\tx_g-g^{\dagger})\times \tx_p & R_g = \mathsf{GasSpr}(\st,\tx) & R_{\bf l}=A_{\bf l} \\ 
+		R_u=R'_u+g' & R_f = (\tx_g-g^{\dagger})\times \tx_p & R_g = \mathsf{GasSpr}(\st,\tx) & R_{\bf l}=A'_{\bf l} \\  
 		R_z=z & \multicolumn{3}{l}{R_s = \left\{\begin{array}{ll}
 			\mathsf{ColSpr}(\st,\tx) & \text{if }z=0\\
 			0 & \text{if }z=1
 		\end{array}\right.} \\
-		\multicolumn{4}{l}{R_{\bf o}=\mathsf{ToList}\left(\left\{ (a,\st^P[a]_o - \st^0[a]_o) | a\in \B_{160}\;\wedge\; \st^P[a]_o - \st^0[a]_o>0 \right\}\right)}\\
-		\multicolumn{4}{l}{R_{\bf i}=\mathsf{ToList}\left(\left\{(a,\st^0[a]_o - \st^P[a]_o) | a\in \B_{160}\;\wedge\; \st^P[a]_o - \st^0[a]_o<0  \right\}\right)}
+		\multicolumn{4}{l}{R_{\bf o}=\mathsf{ToList}\left(\left\{ (a,A'_{\bf c}[a]) | a\in \B_{160}\;\wedge\; A_{\bf c}[a]>0 \right\}\right)}\\
+		\multicolumn{4}{l}{R_{\bf i}=\mathsf{ToList}\left(\left\{(a,-A'_{\bf c}[a]) | a\in \B_{160}\;\wedge\; A_{\bf c}[a]<0  \right\}\right)}
 	\end{array}
 \end{align}

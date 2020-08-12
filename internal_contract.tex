@@ -74,12 +74,14 @@ $\tx$ 的燃料消耗将（在余额充足的前提下）从 $\contract$ 的 \te
 对一个 {\bf 存储抵押资助人} 域值非零的合约 $\contract$ 和调用该合约的交易 $\tx$，
 %For a contract $\contract$ with non-empty {\bf sponsor for collateral} and a transaction $\tx$ calling $\contract$,
 满足以下条件的 $\tx$ 有资格使用存储赞助：
+
 1） 交易发送方 $\senderf(\tx)$ 在 $\contract$ 的 \textbf{白名单} 中，
 
-？2） 交易的 {\bf 存储上限} $\tx_\ell$ 不大于 $\contract$ 的 {\bf 存储抵押资助余额}。
+2） $\contract$ 的 {\bf 存储抵押资助余额} 足够支付交易 {\bf 存储上限} $\tx_\ell$ 所对应的抵押款 (即 $\tx_\ell\times\collateralperbyteline$ \unit)。
 %$\tx$ is eligible for the subsidy for storage usage if: 
 %a) its {\bf sender} $\sender{\tx}$ is in the \textbf{whitelist} of $\contract$, and 
-%b) its {\bf storageLimit} $\tx_\ell$ costs no more than {\bf sponsor balance for collateral} of $\contract$. 
+%b) the {\bf sponsor balance for collateral} of $\contract$ can afford its {\bf storageLimit} $\tx_\ell$ (i.e. $\tx_\ell\times\collateralperbyteline$ \unit).
+
 若 $\tx$ 有资格使用存储补助，该交易执行过程中产生的存储抵押将从 $\contract$ 的 \textbf{存储抵押资助余额} 中扣除，且这些经过修改的存储项的所有者将被设置为 $\contract$。
 %If $\tx$ is eligible, then the collateral for storage incurred in the execution of $\tx$ is deducted from \textbf{sponsor balance for collateral} of $\contract$, and the owner of those modified storage entries is set to $\contract$ accordingly.
 若 $\sender{\tx}$ 不在 \textbf{白名单} 中或 \textbf{存储抵押资助余额} 不足以覆盖 {\bf 存储上限}， 交易发送方 $\sender{\tx}$ 将从其账户余额中支付燃料消耗。
@@ -244,7 +246,7 @@ Staking 合约中的以上两个项都要求存储抵押，而该抵押将在对
 %where $T\eqdef\blockno(\block) - \blockno(\block')$ is the staking period measured by number of blocks, and $\blockinyear$ is the expected number of blocks generated in $365$ days with the target block time $\blocktime$ seconds.
 % 
 因此，在退款后 $\account$ 的 staking 款项全额减少了 $v$，而该账户余额增加了：
-%Therefore after the withdrawal $\account$'s total amount of staking funds is decreased by $v$, and its balance is increased by:
+%Therefore after the withdrawal, $\account$'s total amount of staking funds is decreased by $v$, and its balance is increased by:
 \begin{align}
 	\Delta(\account_b) \eqdef v + \text{Interest issued to $\account$} 
 \end{align}
@@ -271,8 +273,8 @@ Staking 合约中的以上两个项都要求存储抵押，而该抵押将在对
 将投票权与承诺 staking 时长相关联可以减轻系统被攻击的风险，因为攻击者必须在一段足够长的时间内一直持有代币才能获得足够投票权，而这增加了发起攻击的成本。
 %By relating voting power to committed staking period, the risk of being attacked is also mitigated, since the attacker must hold the tokens for a sufficiently long period to obtain enough voting power, which increases the cost of launching an attack.
 
-每个账户 $\account$ 的承诺 staking 时长和 {\bf 冻结规则} 一致的格式被记录在内置的 staking 合约中，
-%For every account $\account$, its committed staking time is recorded in the build-in staking contract in the form of {\bf freezing rules},
+每个账户 $\account$ 的承诺 staking 时长和 {\bf 冻结规则} 一致的格式被记录在账户域 {\bf staking 投票信息 中，
+%For every account $\account$, its committed staking time is recorded in the account field {\bf staking vote info} in the form of {\bf freezing rules},
 其中每一项 $(v,t)\in \N_{256}\times\N_{64}$ 代表在区块排序编号 (即 $\blockno$) 达到 $t$ 之前，$\account$ 的 staking 余额一定不少于 $v$ \unit。
 %where each entry $(v,t)\in \N_{256}\times\N_{64}$ is a promise that the  staking balance of $\account$ must be at least $v$ \unit until the index of block in total order (e.g. $\blockno$) reaches $t$.
 若退款的执行结果将违反任意冻结规则，$\account$ 的退款请求将是无效的。

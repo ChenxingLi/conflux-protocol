@@ -186,8 +186,8 @@ $\\$
 Conflux 将各账户的各组成部分以 $(k,v)\in \B^*\times \B^*$ 格式分别编码。
 %Conflux encodes each component of each account in format of $(k,v)\in \B^*\times \B^*$ respectively. 
 
-\paragraph{基本项} 基本项包含基本组成部分 $\account_{basic}$。对于一个非合约地址，Conflux 不存储只与合约相关的域，例如代码哈希 $\account_c$，管理账户 $\account_a$，和资助信息 $\account_p$。
-%\paragraph{Basic entry.} The basic entry stores basic components $\account_{basic}$. Specially, for a non-contract address, Conflux doesn't stores the fields only related to contract, like code hash $\account_c$, contract admin $\account_a$ and sponsor info $\account_p$. 
+\paragraph{基本项} 若 $\account_{basic}\neq \account^0_{basic}$，基本项包含基本组成部分 $\account_{basic}$。对于一个非合约地址，Conflux 不存储只与合约相关的域，例如代码哈希 $\account_c$，管理账户 $\account_a$，和资助信息 $\account_p$。
+%\paragraph{Basic entry.} The basic entry stores basic components $\account_{basic}$ if $\account_{basic}\neq \account^0_{basic}$. Specially, for a non-contract address, Conflux doesn't stores the fields only related to contract, like code hash $\account_c$, contract admin $\account_a$ and sponsor info $\account_p$. 
 我们用 $\account_{basic\_smp}\eqdef (\account_n, \account_b, \account_t, \account_o, \account_r)$ 表示普通地址包含的基本组成部分。正式表达为
 %Let $\account_{basic\_smp}\eqdef (\account_n, \account_b, \account_t, \account_o, \account_r)$ denote the basic component with only the fields in a normal address. Formally
 \begin{align}
@@ -221,21 +221,21 @@ Conflux 将各账户的各组成部分以 $(k,v)\in \B^*\times \B^*$ 格式分�
 其中，有五个特殊存储项记录了关于 \name 区块链的一些统计信息。这些项没有存储所属者。
 %There are five special storage entries storing some statistic information about \name blockchain, which have no storage owner. 
 
-\paragraph{存储根项} 存储根项记录着账户 $\account$ 的存储布局。
-%\paragraph{Storage root entry.} The storage root entry stores the storage layout for account $\account$. 
+\paragraph{存储根项} 若 $\mathsf{Type}_{\account_{addr}}\in \{\typereserved,\typecontract\}$ 且 $\account_n\neq 0$，存储根项记录着账户 $\account$ 的存储布局项。
+%\paragraph{Storage root entry.} The storage root entry stores the storage layout entry for account $\account$ if $\mathsf{Type}_{\account_{addr}}\in \{\typereserved,\typecontract\}$ and $\account_n\neq 0$. 
 \begin{align}
 	&k\eqdef \alpha_{addr}\cdot [{\sf data}]_{\sf ch}\\
-	&v\eqdef \emptystring
+	&v\eqdef [0000]_{16}
 \end{align}
 
-\paragraph{代码项} 代码项记录着代码信息部分。 $\account_{code}$。 
-%\paragraph{Code entry.} The code entry stores the component code info $\account_{code}$. 
+\paragraph{代码项} 若 $\account_{code}\neq  \account^0_{code}$，代码项记录着代码信息部分 $\account_{code}$。 
+%\paragraph{Code entry.} The code entry stores the component code info $\account_{code}$ if $\account_{code}\neq  \account^0_{code}$. 
 \begin{align}
 	&k\eqdef \alpha_{addr}\cdot [{\sf code}]_{\sf ch}\cdot \alpha_c  \\
 	&v\eqdef \rlp(\account_{code})
 \end{align}
 
-\paragraph{ Staking 投票列表项} Staking 投票列表项记录着 staking 投票列表部分 $\account_{vote}$。 
+\paragraph{ Staking 投票列表项} Staking 投票列表项记录着 staking 投票列表部分 $\account_{vote}\neq  \account^0_{vote}$。 
 %\paragraph{Staking vote list entry.} The staking vote list entry stores the component staking vote list $\account_{vote}$. 
 \begin{align}
 	k&\eqdef \alpha_{addr}\cdot [{\sf vote}]_{\sf ch}  \\
@@ -244,8 +244,8 @@ Conflux 将各账户的各组成部分以 $(k,v)\in \B^*\times \B^*$ 格式分�
 	\account'_{vote} &\eqdef \mbox{$\account_{vote}$ removing all the key $x$ with $\account_{vote}[x]=\account_{vote}[x-1]$}
 \end{align}
 
-\paragraph{锁仓列表项} 锁仓列表项记录着锁仓列表部分 $\account_{deposit}$。 
-%\paragraph{Deposit list entry.} The deposit list entry stores the component deposit list $\account_{deposit}$. 
+\paragraph{锁仓列表项} 锁仓列表项记录着锁仓列表部分 $\account_{deposit}\neq  \account^0_{deposit}$。 
+%\paragraph{Deposit list entry.} The deposit list entry stores the component deposit list $\account_{deposit}\neq  \account^0_{deposit}$. 
 \begin{align}
 	&k\eqdef \alpha_{addr}\cdot [{\sf deposit}]_{\sf ch}  \\
 	&v\eqdef \rlp(\account_{deposit})
@@ -258,8 +258,8 @@ Conflux 将各账户的各组成部分以 $(k,v)\in \B^*\times \B^*$ 格式分�
 %Ethereum collects all the key/value pairs into MPT (Merkle Patricia Trie) and updates it during execution of transactions. 
 然而，在一个高吞吐的区块链系统中， Merkle 前缀树可能被高频率地访问，并因此成为系统性能的瓶颈。
 %However, in a high throughput blockchain system, the MPT may be accessed in a high frequency and hence become a bottleneck of performance. 
-Conflux 维持一个 \textbf{read-through write-back} 缓存，并根据该缓存对 Merkle 前缀树进行周期性的更新。
-%Conflux maintains a \textbf{read-through write-back} cache and commits cached changes to MPT periodically. 
+Conflux 维持一个 \textbf{read-through write-back} 缓存，并根据该缓存在纪元结束时对 Merkle 前缀树进行更新。
+%Conflux maintains a \textbf{read-through write-back} cache and commits cached changes to MPT at the end of epoch execution. 
 
 正式定义下，Conflux 在任意时刻都维持三个键值集合 $T_0,T_1,T_2$， 分别称作 {\bf 快照集}, {\bf 中间集} 和 {\bf 增量集}。
 %Formally, at any time, Conflux maintains three key/value sets $T_0,T_1,T_2$, which are called {\bf snapshot}, {\bf intermediate set} and {\bf delta set} respectively. 
@@ -301,13 +301,13 @@ Conflux 维持一个 \textbf{read-through write-back} 缓存，并根据该缓�
 \paragraph{增量集}
 %\paragraph{Delta set.}
 
-若一个状态项在一笔交易执行后被添加、更新或移除，其最新的内容将被添加到增量集。
-%After a successful transaction execution, if a state entry is added, updated or removed after execution of one transaction, its newest content will be added to the delta set. 
-增量集只比较一笔交易前后的状态项，并不了解执行交易的中间步骤。
-%Notice that the delta set only compares the state entry before and after a transaction execution. It is not aware of the intermediate steps during transaction execution. 
+若一个状态项在一个纪元执行后被添加、更新或移除，其最新的内容将被添加到增量集。
+%After an epoch execution, if a state entry is added, updated or removed, its newest content will be added to the delta set. 
+增量集只比较一个纪元执行前后的状态项，并不了解纪元执行时的中间步骤。
+%Notice that the delta set only compares the state entry before and after the epoch execution. It is not aware of the intermediate steps during epoch execution. 
 %
-删除状态项时，一个该项的初始值将被添加到增量集，代表删除操作。
-%In case of deleting a state entry, an initialization value for corresponding entry will be added to the delta set representing deletion operation. 
+删除状态项时，在增量集中的该项值将被设为 $\varepsilon$。
+%In case of deleting a state entry,the value of corresponding entry will be set to $\varepsilon$ in the delta set. 
 
 每 $\snapshotperiod$ 个纪元，中间集的 Merkle 前缀树将被合并到快照集的 Merkle 前缀树。
 %The intermediate MPT will be merged to snapshot MPT every $\snapshotperiod$ epochs. 
@@ -375,13 +375,13 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 	%It is the transaction sender's responsibility to avoid any extravagance caused by an unnecessarily high {\bf gasLimit}.
 
 	\item {\bf 行动(action):} 
-	一个变量大小域，表示此交易接收方所触发的行动，正式记作 $\tx_a$。
-	%A variable size field indicating the action of this transaction, formally denoted by $\tx_a$. 
-	此参数内含一个子域 {\bf create}，用以标记 $\tx$ 是否为一个创建交易。为了表达的简洁性，我们会使数值暗含该信息。
+	一个变量大小域，表示此交易接收方所触发的行动，即 \textbf{调用} 一个地址或 \textbf{创建（creation）}，正式记作 $\tx_a\in \B_{160}\cup\B_0$。
+	%A variable size field indicating the action of this transaction, which is either a \textbf{call} to an address or a \textbf{creation}, formally denoted by $\tx_a\in \B_{160}\cup\B_0$. 
+	%此参数内含一个子域 {\bf create}，用以标记 $\tx$ 是否为一个创建交易。为了表达的简洁性，我们会使数值暗含该信息。
 	%There is a sub-field {\bf create} indicating whether $\tx$ is a contract creation transaction, which we make it implicit for notation convenience. 
-	因此，$\tx_a$ 表示接收方的 $160$ 比特地址信息,代表着普通账户或合约账户； 
-	%Thus, for action transactions $\tx_a$ indicates the $160$-bit address of the recipient, which refers to either a normal account or a contract account;
-	或当交易是一笔创建交易，则接收方为新创建的合同，且将 $\tx_a$ 认作 $\B_0$ 中的唯一元素，即 $\tx_a = \emptystring$。
+	对一笔 \textbf{调用} 交易而言，行动 $\tx_a$ 表示接收方的 $160$ 比特地址信息,代表着普通账户或合约账户； 
+	%For a \textbf{call} transaction, action $\tx_a$ indicates a $160$-bit address of the recipient, which refers to either a normal account or a contract account;
+	或当交易是一笔 \textbf{创建} 交易，则接收方为新创建的合同，且将 $\tx_a$ 认作 $\B_0$ 中的唯一元素，即 $\tx_a = \emptystring$。
 	%otherwise in case of a creation transaction, the recipient is indeed the newly created contract and we interpret $\tx_a$ as the only element in $\B_0$ and write $\tx_a = \emptystring$.
 
 	\item {\bf 交易额(value):} 一个标量值，等于在交易中发送方意图转给接收方（ $\tx_t$ 所表示的账户或一个新创建的合约）的金额的 Drip 数，记作  $\tx_v\in\N_{256}$。
@@ -399,7 +399,7 @@ $$ StateRoot^{(i)}\eqdef\kec(\rlp(\trie(T^{(i)}_0),\trie(T^{(i)}_1),\trie(T^{(i)
 
 	\item {\bf 链 ID(chainID):} 
 	一个链 ID 值，表示 $\tx$ 想被执行的链 ID。正式记作 $\tx_c\in\N_{32}$，且 {\name} 的链特征是一个常数 $\tx_c=\chainid$。
-	%A binary chain id indicating where $\tx$ is intended to be executed. Formally denoted by $\tx_c\in\N_{32}$ and the chain id of {\name} is a constant $\tx_c=503$.} 
+	%A binary chain id indicating where $\tx$ is intended to be executed. Formally denoted by $\tx_c\in\N_{32}$ and the chain id of {\name} is a constant $\tx_c=\chainid$.} 
 
 	\item {\bf v, r, s:} 
 	$\tx$ 的 ECDSA (椭圆曲线数字签名算法) 签名中相应的域，正式写为 $\tx_w$, $\tx_r$ 和 $\tx_s$。 
@@ -573,7 +573,7 @@ $\block$ 的另一部分是一个交易列表。因此区块 $\block$ 可使用�
 %This root is recorded in the header as $\head_e\in\B_{256}$.
 
 每一笔已执行的交易 $\tx$ 的收据都是一个九元组 $R\eqdef \left(R_u, R_f, R_g, R_b, R_{\bf l}, R_z,R_{\bf o},R_s,R_{\bf i}\right)$ ：
-%For every executed transaction $\tx$, the receipt $R\eqdef \left(R_u, R_f, R_g, R_b, R_{\bf l}, R_z,R_{\bf o},R_s,R_{\bf i}\right)$ is a tuple consisting of six fields:
+%For every executed transaction $\tx$, the receipt $R\eqdef \left(R_u, R_f, R_g, R_b, R_{\bf l}, R_z,R_{\bf o},R_s,R_{\bf i}\right)$ is a tuple consisting of nine fields:
 \begin{itemize}[nosep]
 	\item $R_u\in\N_{256}$ 为 \emph{包含交易 $\tx$ 收据的纪元} 中当该笔交易 $\tx$ 发生后的累积 gas 使用量;
 	%\item $R_u\in\N_{256}$ is the cumulative gas used \emph{in the epoch where $\tx$ is executed} as of immediately after $\tx$ has been processed;

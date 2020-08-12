@@ -73,8 +73,8 @@ Conflux 采用 \emph{存储抵押} （缩写为 CFS） 机制作为存储费用�
 \subsection{存储写入}\label{sec:storage_maintain}
 %\subsection{Storage writing}\label{sec:storage_maintain}
 
-为了在存储项被释放时将存储抵押退回给付款人，Conflux 必须追踪每个存储项的所有者。在此我们正式定义存储写入函数 $\Phi(\st,a,k,v,o)$，它将账户 $a$ 的存储项 $k$ 的值设为 $v$，而 $o$ 表示存储项所有者的地址。函数返回更新后的世界状态 $\st'$。
-%In order to refund the storage collateral to payer when the storage entry is released, Conflux must track the owner for each storage entry. Here we formally describe the storage writing function $\Phi(\st,a,k,v,o)$, which sets storage entry $k$ of account $a$ to value $v$ and address $o$ is the storage owner. It returns updated world-state $\st'$. 
+为了在存储项被释放时将存储抵押退回给付款人，Conflux 必须追踪每个存储项的所有者。在此我们正式定义存储写入函数 $\Phi(\st,a,k,v,o)$，它将账户 $a$ 的存储项 $k$ 的值设为 $v$，而 $o$ 表示存储项所有者的地址。函数返回更新后的世界状态 $\st'$ 和一个子状态 $A$。
+%In order to refund the storage collateral to payer when the storage entry is released, Conflux must track the owner for each storage entry. Here we formally describe the storage writing function $\Phi(\st,a,k,v,o)$, which sets storage entry $k$ of account $a$ to value $v$ and address $o$ is the storage owner. It returns updated world-state $\st'$ and a substate $A$. 
 
 \begin{align}
 	\st'   &\eqdef \st \qquad \mbox{  except:}\\ 
@@ -84,8 +84,11 @@ Conflux 采用 \emph{存储抵押} （缩写为 CFS） 机制作为存储费用�
 			\varnothing & v= 0\\
 		\end{array}
 	\right.\\
-	\st'[s_o]_o &\eqdef \st[s_o]_o - 64 \times \collateralperbyte \quad \mbox{ if } v\neq \st[a]_{\bf s}[k]_v \;\wedge\; s_o\neq s'_o \;\wedge\; s_o\neq\varnothing \\ 
-	\st'[s'_o]_o &\eqdef \st[s'_o]_o + 64 \times \collateralperbyte \quad \mbox{ if }v\neq \st[a]_{\bf s}[k]_v \;\wedge\; s_o\neq s'_o \;\wedge\; s'_o\neq\varnothing \\ 
+	A^1 &\eqdef A^0  \qquad \mbox{  except:}\\ 
+	A^1[s_o]_{\bf c} &\eqdef - 64 \times \collateralperbyte \quad \mbox{ if } v\neq \st[a]_{\bf s}[k]_v \;\wedge\; s_o\neq s'_o \;\wedge\; s_o\neq\varnothing \\ 
+	A^2 &\eqdef A^0  \qquad \mbox{  except:}\\ 
+	A^2[s'_o]_{\bf c} &\eqdef 64 \times \collateralperbyte \quad \mbox{ if }v\neq \st[a]_{\bf s}[k]_v \;\wedge\; s_o\neq s'_o \;\wedge\; s'_o\neq\varnothing \\ 
+	A &\eqdef A^1\Cup A^2 \\
 	\text{where:} & \\
 	s &\eqdef \st[a]_{\bf s}[k] \\
 	s' &\eqdef \st'[a]_{\bf s}[k] 
