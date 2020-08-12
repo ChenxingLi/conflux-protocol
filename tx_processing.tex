@@ -287,7 +287,7 @@ $A$ 的组成部分定义如下：
 	A^0\eqdef \left( \varnothing, \emptystring, \varnothing\right)
 \end{align}
 
-对任意两个子状态 $A^1$ 和 $A^2$，两者积累的子状态 $A\eqdef A^1\Cup A^2$ 定义如下：
+对任意两个子状态 $A^1$ 和 $A^2$，两者累计的子状态 $A\eqdef A^1\Cup A^2$ 定义如下：
 %For any two substate $A^1$ and $A^2$, the accrued substate $A\eqdef A^1\Cup A^2$ is defined by 
 \begin{align}
 	A_{\bf s} &\eqdef A^1_{\bf s} \cup A^2_{\bf s} \\ 
@@ -297,14 +297,20 @@ $A$ 的组成部分定义如下：
 \end{align}
 
 
-\subsubsection{Type dependent execution}
+\subsubsection{类型依存性执行}
+%\subsubsection{Type dependent execution}
 
-If transaction passes the preprocessing, 
-then {\name} evaluates the \emph{post-execution provisional state} $\st^P$ from \emph{pre-execution provisional state} $\st^0$ depending on the transaction type as specified in $\tx_a$: either contract creation or message call. 
+若交易通过了预处理阶段，
+%If transaction passes the preprocessing, 
+{\name} 将根据 \emph{执行前临时状态} $\st^0$ 评估其 \emph{执行后临时状态} $\st^P$。
+而\emph{执行前临时状态} $\st^0$ 取决于 $\tx_a$ 所明确的交易类型：创建合约或消息调用。
+%then {\name} evaluates the \emph{post-execution provisional state} $\st^P$ from \emph{pre-execution provisional state} $\st^0$ depending on the transaction type as specified in $\tx_a$: either contract creation or message call. 
 %
-The gas available for the proceeding computation is $g\eqdef \tx_g-g_0$, where $g_0$ is the intrinsic cost of $\tx$ as in (\ref{def:g0}). 
+下一步计算可用的燃料为 $g\eqdef \tx_g-g_0$，其中 $g_0$ 表示 $\tx$ 的内在成本（定义见 \ref{def:g0}）。
+%The gas available for the proceeding computation is $g\eqdef \tx_g-g_0$, where $g_0$ is the intrinsic cost of $\tx$ as in (\ref{def:g0}). 
 
-We define the tuple of post-execution provisional state $\st^{P}$, remaining gas $g$, accrued substate $A$ and status code $z$:
+我们定义一个包含执行后临时状态 $\st^{P}$ ，剩余燃料 $g$，累计子状态 $A$，和状态代码 $z$ 的多元组：
+%We define the tuple of post-execution provisional state $\st^{P}$, remaining gas $g$, accrued substate $A$ and status code $z$:
 \begin{align}\label{def:transform}
 	(\st^{P},g',A,z)\eqdef
 	\begin{cases}
@@ -313,16 +319,22 @@ We define the tuple of post-execution provisional state $\st^{P}$, remaining gas
 	\end{cases}
 \end{align}
 %
-Notice that we have three more parameters compared with Ethereum. 
+需要注意的是，与以太坊相比我们多了三个参数。
+%Notice that we have three more parameters compared with Ethereum. 
 
-The specifications of function $\creation$ and $\execution$ are given in Section~\ref{sec:creation} and Section~\ref{sec:execution} respectively.
+函数 $\creation$ 和 $\execution$ 的规范分别在第 \ref{sec:creation} 节和第 \ref{sec:execution} 节有所说明。
+%The specifications of function $\creation$ and $\execution$ are given in Section~\ref{sec:creation} and Section~\ref{sec:execution} respectively.
 
-\subsubsection{Postprocessing}\label{sec:tx_post_process}
+\subsubsection{后处理}\label{sec:tx_post_process}
+%\subsubsection{Postprocessing}\label{sec:tx_post_process}
 
-\paragraph{Storage collateral refund and charge.}
+\paragraph{存储抵押退款及收费}
+%\paragraph{Storage collateral refund and charge.}
 
-After the message call or contract creation is processed, Conflux checks whether the incremental storage exceeds storage limit specified in $\tx_\ell$ and if the storage owner has enough balance for storage collateral. 
-Let $i\eqdef \mathsf{ColOwner}(\st,\tx)$ be the address who owns modified storage entries and $v$ be the available balance to pay for storage collateral, which is defined as 
+在处理消息调用或合约创建请求后，Conflux 检查增加的存储是否超过 $\tx_\ell$ 中所规定的存储上限，以及存储项所有者是否有足够余额支付存储抵押。
+%After the message call or contract creation is processed, Conflux checks whether the incremental storage exceeds storage limit specified in $\tx_\ell$ and if the storage owner has enough balance for storage collateral. 
+我们用 $i\eqdef \mathsf{ColOwner}(\st,\tx)$ 表示修改后存储项的所有者地址，并用 $v$ 表示可用于支付存储抵押的余额，其定义如下：
+%Let $i\eqdef \mathsf{ColOwner}(\st,\tx)$ be the address who owns modified storage entries and $v$ be the available balance to pay for storage collateral, which is defined as 
 \begin{align}
 	v \eqdef \begin{cases}
 		\st^{P}[\sender{\tx}]_b & \text{if }\mathsf{ColSpr}(\st,\tx)=\false \\
