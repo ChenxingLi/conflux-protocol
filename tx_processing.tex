@@ -342,7 +342,8 @@ $A$ 的组成部分定义如下：
 	\end{cases}
 \end{align}
 %
-Notice that $A_{\bf c}[i]$ is the incremental storage collateral during execution.
+需要注意的是，$A_{\bf c}[i]$ 是在执行过程中增加的存储抵押。
+%Notice that $A_{\bf c}[i]$ is the incremental storage collateral during execution.
 If $A_{\bf c}[i]>\min\{v,\tx_\ell\times 10^{18}/1024\}$, then the execution fails because of not enough balance for collateral or exceeding the storage limit, 
 and all the modified state will be reverted to $\st^0$, 
 i.e. $\st'\eqdef\st^0$. 
