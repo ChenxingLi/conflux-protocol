@@ -344,19 +344,23 @@ $A$ 的组成部分定义如下：
 %
 需要注意的是，$A_{\bf c}[i]$ 是在执行过程中增加的存储抵押。
 %Notice that $A_{\bf c}[i]$ is the incremental storage collateral during execution.
-If $A_{\bf c}[i]>\min\{v,\tx_\ell\times 10^{18}/1024\}$, then the execution fails because of not enough balance for collateral or exceeding the storage limit, 
-and all the modified state will be reverted to $\st^0$, 
-i.e. $\st'\eqdef\st^0$. 
-Let $R'$ denote the receipt of last transaction.
-Then the receipt of current transaction $\tx$ will be 
+若 $A_{\bf c}[i]>\min\{v,\tx_\ell\times 10^{18}/1024\}$，执行将因为抵押余额不足或超出存储上限而失败，
+%If $A_{\bf c}[i]>\min\{v,\tx_\ell\times 10^{18}/1024\}$, then the execution fails because of not enough balance for collateral or exceeding the storage limit, 
+且所有经过修改的状态将被恢复至 $\st^0$，即 $\st'\eqdef\st^0$。
+%and all the modified state will be reverted to $\st^0$, i.e. $\st'\eqdef\st^0$. 
+我们用 $R'$ 表示上一笔交易的收据，则此情况下当前交易 $\tx$ 的收据为
+%Let $R'$ denote the receipt of last transaction. Then the receipt of current transaction $\tx$ will be 
 \begin{align}
 	&R_u=R'_u+\tx_g && R_f = \tx_g\times\tx_p && R_g = \mathsf{GasSpr}(\st,\tx) && R_{\bf l}=\emptystring \\
 	&R_z=1 && R_s = \mathsf{ColSpr}(\st,\tx) && R_{\bf o}=\emptystring && R_{\bf i}=\emptystring
 \end{align}
 
-Otherwise \name charges and refunds storage collateral and transforms world-state $\st^P$ into $\st^*$. 
-We skim the self-destructed contracts here because their storage collateral have been refunded during self-destruction. 
-The storage collateral in account state is also updated at this time. 
+否则，\name 收取并在后续退还存储抵押，将世界状态 $\st^P$ 转化为 $\st^*$/
+%Otherwise \name charges and refunds storage collateral and transforms world-state $\st^P$ into $\st^*$. 
+我们在此略过边执行边自毁合约，因为其存储抵押在自毁过程中已被退还。
+%We skim the self-destructed contracts here because their storage collateral have been refunded during self-destruction. 
+此时，账户状态中的存储抵押也将被更新。
+%The storage collateral in account state is also updated at this time. 
 
 \begin{align}
 	&\st^1  \eqdef \st^{P} \qquad \mbox{  except:}\\
@@ -375,12 +379,13 @@ The storage collateral in account state is also updated at this time.
 	& f(a) \eqdef \min\{-A_{\bf c}[a], \st^P_o[a]\}
 \end{align}
 
+\paragraph{燃料费退款}
+%\paragraph{Gas fee refund.}
 
-\paragraph{Gas fee refund.}
-
-The \emph{refundable amount of gas} $g^{\dagger}$ is the minimum of the \emph{legitimately remaining gas} $g'$ (as calculated in (\ref{def:transform})) and a quarter of the \textbf{gasLimit} of $\tx$,
-	i.e. $g^{\dagger}\eqdef \min\set{g', \tx_g/4}$.
-The refund of gas fee is applied on world-state $\st^{*}$ and results in $\st'\eqdef \Upsilon(\st,\tx)$.
+\emph{可退还燃料量} $g^{\dagger}$ 是以下两个中更小的值：$\tx$ \textbf{燃料量} 的四分之一和 \emph{合理剩余燃料} $g'$。即，$g^{\dagger}\eqdef \min\set{g', \tx_g/4}$。
+%The \emph{refundable amount of gas} $g^{\dagger}$ is the minimum of the \emph{legitimately remaining gas} $g'$ (as calculated in (\ref{def:transform})) and a quarter of the \textbf{gasLimit} of $\tx$, i.e. $g^{\dagger}\eqdef \min\set{g', \tx_g/4}$.
+燃料费退款作用于世界状态 $\st^{*}$，并使 $\st'\eqdef \Upsilon(\st,\tx)$。
+%The refund of gas fee is applied on world-state $\st^{*}$ and results in $\st'\eqdef \Upsilon(\st,\tx)$.
 
 \begin{align}
 	& \st^2  \eqdef \st^1 \qquad \mbox{  except:}\\
@@ -392,7 +397,11 @@ The refund of gas fee is applied on world-state $\st^{*}$ and results in $\st'\e
 	\end{cases} 
 \end{align}
 
-\paragraph{Killed contract processing} The sponsor mechanism and collateral mechanism bring additional tasks in contract destruction. First, for all the killed contract, we refund the collateral for code and storage entries to the corresponding owner. 
+\paragraph{Killed contract processing} 
+%\paragraph{Killed contract processing} 
+
+赞助机制和抵押机制为销毁合同带来额外任务。首先，对于所有 killed 合约而言，我们将代码项和存储项的抵押退还给相对应的所有者。
+%The sponsor mechanism and collateral mechanism bring additional tasks in contract destruction. First, for all the killed contract, we refund the collateral for code and storage entries to the corresponding owner. 
 \begin{align}
 & \st^3  \eqdef \st^2 \qquad \mbox{  except:}\\
 & \forall a \in A_{\bf s},\; \st^2[a]_{\bf s} \eqdef \varnothing \\
@@ -414,7 +423,8 @@ The refund of gas fee is applied on world-state $\st^{*}$ and results in $\st'\e
 & \forall a \in \B^{160}, A^*[a]_{\bf c} = - \collateralperbyte \times \sum_{a'\in A_{\bf s}}\left(\mathbb{I}(\st^2[a']_{w}=a) \times |\st^2[a']_{\bf p}| + \sum_{k\in \B_*} \mathbb{I}(\st^2[a']_{\bf s}[k]_o=a)\times 64\right) 
 \end{align}
 
-Then we refund the sponsor balance for all the killed contract. 
+接着，我们退回所有killed合约的资助余额。
+%Then we refund the sponsor balance for all the killed contract. 
 %
 \begin{align}
 &\st^4  \eqdef \st^3 \qquad \mbox{  except:}\\
@@ -423,7 +433,8 @@ Then we refund the sponsor balance for all the killed contract.
 &\forall a' \in A_{\bf s},\; \st^4[a']_p[{\sf gas}]_b\eqdef 0
 \end{align}
 
-Then we delete all the contracts and burn all the rest balance 
+接着，我们删除所有合约并焚毁剩余余额。
+%Then we delete all the contracts and burn all the rest balance 
 %
 \begin{align}
 &\st' \eqdef \st^4 \qquad \mbox{  except:} \\ 
@@ -434,12 +445,13 @@ Then we delete all the contracts and burn all the rest balance
 &k_3 \eqdef {\sf [total\char`_issued\char`_tokens]_{\sf ch}}  
 \end{align}
 
-\paragraph{Transaction Receipt.} 
+\paragraph{交易收据} 
+%\paragraph{Transaction Receipt.} 
 
-Now the transaction execution is accomplished.
-The returning status code $z$ denotes whether the execution succeeds or not. 
-Supposing that $R'$ is the receipt of last transaction, 
-the receipt of current transaction will be as follows:
+现在交易执行已完成。returning 状态代码 $z$ 代表执行是否成功。
+%Now the transaction execution is accomplished. The returning status code $z$ denotes whether the execution succeeds or not. 
+假设 $R'$ 为上一笔交易的收据，当前交易的收据如下：
+%Supposing that $R'$ is the receipt of last transaction, the receipt of current transaction will be as follows:
 \begin{align}
 	\begin{array}{llll}
 		R_u=R'_u+g' & R_f = (\tx_g-g^{\dagger})\times \tx_p & R_g = \mathsf{GasSpr}(\st,\tx) & R_{\bf l}=A'_{\bf l} \\  
