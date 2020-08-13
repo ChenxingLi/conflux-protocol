@@ -306,7 +306,7 @@ $A$ 的组成部分定义如下：
 而\emph{执行前临时状态} $\st^0$ 取决于 $\tx_a$ 所明确的交易类型：创建合约或消息调用。
 %then {\name} evaluates the \emph{post-execution provisional state} $\st^P$ from \emph{pre-execution provisional state} $\st^0$ depending on the transaction type as specified in $\tx_a$: either contract creation or message call. 
 %
-下一步计算可用的燃料为 $g\eqdef \tx_g-g_0$，其中 $g_0$ 表示 $\tx$ 的内在成本（定义见 \ref{def:g0}）。
+下一步计算可用的燃料为 $g\eqdef \tx_g-g_0$，其中 $g_0$ 表示 $\tx$ 的固有成本（定义见 \ref{def:g0}）。
 %The gas available for the proceeding computation is $g\eqdef \tx_g-g_0$, where $g_0$ is the intrinsic cost of $\tx$ as in (\ref{def:g0}). 
 
 我们定义一个包含执行后临时状态 $\st^{P}$ ，剩余燃料 $g$，累计子状态 $A$，和状态代码 $z$ 的多元组：
@@ -355,10 +355,8 @@ $A$ 的组成部分定义如下：
 	&R_z=1 && R_s = \mathsf{ColSpr}(\st,\tx) && R_{\bf o}=\emptystring && R_{\bf i}=\emptystring
 \end{align}
 
-否则，\name 收取并在后续退还存储抵押，将世界状态 $\st^P$ 转化为 $\st^*$/
+否则，\name 收取并在后续退还存储抵押，将世界状态 $\st^P$ 转化为 $\st^*$/。
 %Otherwise \name charges and refunds storage collateral and transforms world-state $\st^P$ into $\st^*$. 
-我们在此略过边执行边自毁合约，因为其存储抵押在自毁过程中已被退还。
-%We skim the self-destructed contracts here because their storage collateral have been refunded during self-destruction. 
 此时，账户状态中的存储抵押也将被更新。
 %The storage collateral in account state is also updated at this time. 
 
@@ -397,10 +395,10 @@ $A$ 的组成部分定义如下：
 	\end{cases} 
 \end{align}
 
-\paragraph{Killed contract processing} 
+\paragraph{已终止合约处理} 
 %\paragraph{Killed contract processing} 
 
-赞助机制和抵押机制为销毁合同带来额外任务。首先，对于所有 killed 合约而言，我们将代码项和存储项的抵押退还给相对应的所有者。
+赞助机制和抵押机制为销毁合同带来额外任务。首先，对于所有已终止合约而言，我们将代码项和存储项的抵押退还给相对应的所有者。
 %The sponsor mechanism and collateral mechanism bring additional tasks in contract destruction. First, for all the killed contract, we refund the collateral for code and storage entries to the corresponding owner. 
 \begin{align}
 & \st^3  \eqdef \st^2 \qquad \mbox{  except:}\\
@@ -423,7 +421,7 @@ $A$ 的组成部分定义如下：
 & \forall a \in \B^{160}, A^*[a]_{\bf c} = - \collateralperbyte \times \sum_{a'\in A_{\bf s}}\left(\mathbb{I}(\st^2[a']_{w}=a) \times |\st^2[a']_{\bf p}| + \sum_{k\in \B_*} \mathbb{I}(\st^2[a']_{\bf s}[k]_o=a)\times 64\right) 
 \end{align}
 
-接着，我们退回所有killed合约的资助余额。
+接着，我们退回所有已终止合约的资助余额。
 %Then we refund the sponsor balance for all the killed contract. 
 %
 \begin{align}
@@ -448,7 +446,7 @@ $A$ 的组成部分定义如下：
 \paragraph{交易收据} 
 %\paragraph{Transaction Receipt.} 
 
-现在交易执行已完成。returning 状态代码 $z$ 代表执行是否成功。
+到此步，交易执行已完成。而返回的状态代码 $z$ 表明执行是否成功。
 %Now the transaction execution is accomplished. The returning status code $z$ denotes whether the execution succeeds or not. 
 假设 $R'$ 为上一笔交易的收据，当前交易的收据如下：
 %Supposing that $R'$ is the receipt of last transaction, the receipt of current transaction will be as follows:

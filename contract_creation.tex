@@ -40,7 +40,7 @@ A number of intrinsic parameters are used when creating a smart contract account
 We define the contract creation function by $\creation$,
 which evaluates from the above parameters and modifies the state $\st$ to a new state $\st'$, together with the leftover gas $g'$, the accrued substate $A$, the result of creation, and the output $\vec{o}$. 
 \begin{align}
-	\left(\st',g', A, z, \vec{o} \right)\eqdef \creation\left(\st, s, o, \vec{t},i, g, p, v, \vec{i}, e, w \right)
+	\left(\st',g', A, z, \vec{o} \right)\eqdef \creation\left(\st, s, o, \vec{t},i, g, p, v, \vec{i}, e, \zeta,w \right)
 \end{align}
 
 
@@ -70,7 +70,7 @@ The sender's balance is reduced by the transferred value (there must be enough b
 Thus the mutated state becomes $\st^*$:
 \begin{align}
 	\st^* & \eqdef \st \qquad{ \text{except:}}\\
-	\st^*[a] &\eqdef \account^0 \quad\text{except:}\; \st^*[a]_n=1 \wedge \st^*[a]_b=v+\st[a]_b \wedge \st^*[a]_a=s\\
+	\st^*[a] &\eqdef \account^0 \quad\text{except:}\; \st^*[a]_n=1 \wedge \st^*[a]_b=v+\st[a]_b \wedge \st^*[a]_a=o\\
 	% \left(a, \account_{state}\right)\\
 	\st^*[s] &\eqdef \begin{cases}
 		\varnothing & \mbox{if $\st[s]=\varnothing$ $\land$ $v=0$}\\
@@ -128,7 +128,7 @@ The storage cost $s$ is proportional to the code size of the created contract an
 
 	\item a substate $A^{*}$ will be generated to record the storage occupied by code size. the code size collateral will be charged in transaction post processing and will be locked during the lifetime of the created contract. (Conflux will record the owner of code in world-state and refund the collateral when the contract is destroyed):
 	\begin{align}
-		A^{*} \eqdef   A^0 \quad\mbox{except: }A^*_{\bf c}[i]=|\vec{o}|
+		A^{*} \eqdef   A^0 \quad\mbox{except: }A^*_{\bf p}[i]=|\vec{o}|
 	\end{align}
 \end{itemize}
 
@@ -144,8 +144,9 @@ If the contract creation succeeds, we formally specify the resultant state, gas,
 	\st' &\eqdef \st^{**} \quad\mbox{except:} \\
 		\st'[a]_c &\eqdef \kec(\vec{o}) \\ 
 		\st'[a]_{code} &\eqdef (\vec{o},i) \\
-		\st'[i]_{o}    &\eqdef \st^{**}[i]_{o}  + |\vec{o}|\times \collateralperbyte \\
 	\notag \\
+	A^* &\eqdef A^0 \quad\mbox{except:} \\
+	A_{\bf c}[a] &\eqdef |\vec{o}|\times \collateralperbyte \\
 	A' &\eqdef A \Cup A^{*} \\ 
 	z &\eqdef 0
 \end{align}
