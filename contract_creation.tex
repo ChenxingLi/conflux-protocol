@@ -2,53 +2,74 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Contract Creation}
+\subsection{合约创建}
+%\subsection{Contract Creation}
 \label{sec:creation}
 
-A number of intrinsic parameters are used when creating a smart contract account:
+当创建一个智能合约账户时，我们使用若干固有参数：
+%A number of intrinsic parameters are used when creating a smart contract account:
 \begin{itemize}[nosep]
-	\item world-state ${\st}$;
+	\item 世界状态 ${\st}$;
+	%\item world-state ${\st}$;
 	
-	\item sender $s$;
+	\item 发送方 $s$;
+	%\item sender $s$;
 
-	\item original sender $o$;
+	\item 原发送方 $o$;
+	%\item original sender $o$;
 	
-	\item other recipients in call stack $\vec{t}$;
+	\item 调用栈中其他参与方 $\vec{t}$;
+	%\item other recipients in call stack $\vec{t}$;
 	
-	\item storage owner $i$;
+	\item 存储所有者 $i$;
+	%\item storage owner $i$;
 		
-	\item available gas $g$;
+	\item 可用燃料 $g$;
+	%\item available gas $g$;
 
 	% \item storage limit $\ell$;
 
-	\item gas price $p$;
+	\item 燃料价格 $p$;
+	%\item gas price $p$;
 
-	\item endowment $v$;
+	\item 资助额 $v$;
+	%\item endowment $v$;
 
-	\item initialization code $\vec{i}$ as an arbitrary length byte array;
+	\item 表示初始化代码的任意长度字节数组 $\vec{i}$ ;
+	%\item initialization code $\vec{i}$ as an arbitrary length byte array;
 
-	\item the present depth of message-call/contraction-creation stack $e$;
+	\item 当前消息调用栈/合约创建栈的深度 $e$;
+	%\item the present depth of message-call/contraction-creation stack $e$;
 
-	\item the salt for new account's address $\zeta$,\\
-	where $\zeta = \varnothing$ if the creation was caused by {\hyperlink{create}{$\op{CREATE}$}}, 
-	and $\zeta\in \B_{256}$ if the creation was caused by {\hyperlink{create2}{$\op{CREATE2}$}};
+	\item 新账户地址的salt $\zeta$，\\
+	其中，若 {\hyperlink{create}{$\op{CREATE}$}} 使得合约创建，则 $\zeta = \varnothing$；
+	若 {\hyperlink{create2}{$\op{CREATE2}$}} 使得合约创建，则 $\zeta\in \B_{256}$；
+	%\item the salt for new account's address $\zeta$,\\
+	%where $\zeta = \varnothing$ if the creation was caused by {\hyperlink{create}{$\op{CREATE}$}}, 
+	%and $\zeta\in \B_{256}$ if the creation was caused by {\hyperlink{create2}{$\op{CREATE2}$}};
 
-	\item and finally the permission to change the state $w$.
+	\item 以及，改变状态的许可 $w$.
+	%\item and finally the permission to change the state $w$.
 \end{itemize}
 
 
-We define the contract creation function by $\creation$,
-which evaluates from the above parameters and modifies the state $\st$ to a new state $\st'$, together with the leftover gas $g'$, the accrued substate $A$, the result of creation, and the output $\vec{o}$. 
+我们使用 $\creation$ 表示合约创建函数，
+%We define the contract creation function by $\creation$,
+该函数根据以上参数，评估并修改状态 $\st$ 为新状态 $\st'$，并一起返回剩余燃料 $g'$、累计子状态 $A$、合约创建结果 $\zeta$ 和输出 $\vec{o}$。
+%which evaluates from the above parameters and modifies the state $\st$ to a new state $\st'$, together with the leftover gas $g'$, the accrued substate $A$, the result of creation, and the output $\vec{o}$. 
 \begin{align}
 	\left(\st',g', A, z, \vec{o} \right)\eqdef \creation\left(\st, s, o, \vec{t},i, g, p, v, \vec{i}, e, \zeta,w \right)
 \end{align}
 
-
+由 {\hyperlink{create}{$\op{CREATE}$}} 新创建的账户 $\account$ 的地址 $a$ 由一个 $4$ 位合约类型标志，一个 Keccak 哈希值的最右 $156$ 位（即第 $100$ 至 $255$ 位）连接而成。该哈希值对一个零字节，发送方地址 $s$，账户序列号的小端字节序 $32$ 字节数组，和 \cvm 代码的 Keccak 哈希
+???
 The address $a$ of the account $\account$ newly created by {\hyperlink{create}{$\op{CREATE}$}} is defined as the $4$-bit contract type indicator concatenating the rightmost $156$ bits (i.e. the $100$-th to $255$-th bit) of the Keccak hash of a zero byte, the sender address $s$, the little-endian 32-byte array of its account nonce and the Keccak hash of \cvm code. 
 % 
+而由 {\hyperlink{create2}{$\op{CREATE2}$}} 新创建的账户地址稍不同于前一种，其用salt $\zeta$ 代替账户序列号，并在取 Keccak 哈希值之前改变leading字节 (following EIP-1014)
+？？？？
 For {\hyperlink{create2}{$\op{CREATE2}$}} the rule is slightly different by substituting account nonce with the salt $\zeta$ and changing the leading byte before taking Keccak (following EIP-1014).
-Combining these two cases, 
-the resultant address for the new contract account $\account$ is defined as follows:
+综合两种情况，新合约账号 $\account$ 的地址定义如下：
+%Combining these two cases, the resultant address for the new contract account $\account$ is defined as follows:
 \begin{align}\label{eq:new-address}
 	a= A(s, \st[s]_{n} - 1, \zeta, \vec{i}) \eqdef 
 	\left\{\begin{array}{l l l l l}
@@ -58,16 +79,21 @@ the resultant address for the new contract account $\account$ is defined as foll
 		& \text{otherwise}
 	\end{array} \right.
 \end{align}
-where $\mathrm{LE}_{32}(\cdot)$ denotes the function that expands an integer value in $[0,2^{256}-1]$ to a little-endian 32-byte array. 
+其中 $\mathrm{LE}_{32}(\cdot)$ 代表一个函数，其将一个整数值扩为一个 $32$ 位小端字节序的字节数组。
+%where $\mathrm{LE}_{32}(\cdot)$ denotes the function that expands an integer value in $[0,2^{256}-1]$ to a little-endian 32-byte array. 
 %
-Note that we use $\st[s]_n-1$ since it is indeed the sender's nonce at the generation of the respective transaction or VM operation. 
+需注意的是，我们使用 $\st[s]_n-1$ 的原因是，它等于相应的交易或 VM 操作生成时的发送方序列号。
+%Note that we use $\st[s]_n-1$ since it is indeed the sender's nonce at the generation of the respective transaction or VM operation. 
 
-If $\st[a]_c\neq \kec(\emptystring)$, a \emph{Contract Address Conflict} exception is triggered. Function $\creation$ returns $(\varnothing,g,A^0,1)$ immediately. 
+若 $\st[a]_c\neq \kec(\emptystring)$，系统将触发一个 \emph{合约地址冲突} 例外。此情况发生时，函数 $\creation$ 将立刻返回 $(\varnothing,g,A^0,1)$。
+%If $\st[a]_c\neq \kec(\emptystring)$, a \emph{Contract Address Conflict} exception is triggered. Function $\creation$ returns $(\varnothing,g,A^0,1)$ immediately. 
 
-Otherwise, the account's nonce is initialized to one, the balance as the value passed by the contract creation transaction,
-the storage and code as for the empty string.
-The sender's balance is reduced by the transferred value (there must be enough balance or the transaction will not be executed).
-Thus the mutated state becomes $\st^*$:
+否则，账户序列号将初始化为一，账户余额根据合约创建交易设置，存储项和代码项皆设为空白字符串。
+%Otherwise, the account's nonce is initialized to one, the balance as the value passed by the contract creation transaction, the storage and code as for the empty string.
+发送者的余额根据转账额减少（交易执行需要余额足够）。
+%The sender's balance is reduced by the transferred value (there must be enough balance or the transaction will not be executed).
+因此，转变后的状态 $\st^*$ 为
+%Thus the mutated state becomes $\st^*$:
 \begin{align}
 	\st^* & \eqdef \st \qquad{ \text{except:}}\\
 	\st^*[a] &\eqdef \account^0 \quad\text{except:}\; \st^*[a]_n=1 \wedge \st^*[a]_b=v+\st[a]_b \wedge \st^*[a]_a=o\\
@@ -77,13 +103,21 @@ Thus the mutated state becomes $\st^*$:
 		\st[s]\quad\mbox{except}:	\st^*[s]_b=\st[s]_b-v	& \mbox{otherwise}
 	\end{cases}
 \end{align}
+其中，$\account^0$ 为默认账户（详见 \cref{eq:default_account}）。
 where $\account^0$ is the default account specified in~\cref{eq:default_account}. 
 
-The unmentioned components of an account are initialized by default.
+其他未提及的账户组成部分将初始化为默认值。
+%The unmentioned components of an account are initialized by default.
 
-Finally the account $\account$ is initialized by \cvm code $\vec{i}$ according to the execution model.
-Code execution may effect several events that are not internal to the execution state:
-the account's storage can be altered, further accounts can be created and further messages calls can be made.
+最后，账户 $\account$ 将根据执行模型由 \cvm 代码 $\vec{i}$ 初始。
+%Finally the account $\account$ is initialized by \cvm code $\vec{i}$ according to the execution model.
+代码执行可能会影响执行状态外部的数个环节：
+%Code execution may effect several events that are not internal to the execution state:
+账户的存储可以被改变，可以创建更多账户，进行更多消息调用。
+%the account's storage can be altered, further accounts can be created and further messages calls can be made.
+如此，代码执行函数 $\execute$ 
+？？？ evaluate to
+包含结果状态 $\st^{**}$，剩余可用燃料 $g^{**}$，累计子状态 $A$，和主体代码 $\vec{o}$ 的多元组。
 As such, the code execution function $\execute$ evaluates to a tuple of resultant state $\st^{**}$, available gas remaining $g^{**}$, the accrued substate $A$ and the body code $\vec{o}$.
 \begin{align}
 	\left(\st^{**}, g^{**},  A, \vec{o} \right) \eqdef \execute\left(\st^*, g, I\right)
