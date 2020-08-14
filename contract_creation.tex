@@ -6,7 +6,7 @@
 %\subsection{Contract Creation}
 \label{sec:creation}
 
-当创建一个智能合约账户时，我们使用若干固有参数：
+当创建一个智能合约账户时，我们使用若干参数：
 %A number of intrinsic parameters are used when creating a smart contract account:
 \begin{itemize}[nosep]
 	\item 世界状态 ${\st}$;
@@ -41,7 +41,7 @@
 	\item 当前消息调用栈/合约创建栈的深度 $e$;
 	%\item the present depth of message-call/contraction-creation stack $e$;
 
-	\item 新账户地址的salt $\zeta$，\\
+	\item 新账户地址的盐 $\zeta$，\\
 	其中，若 {\hyperlink{create}{$\op{CREATE}$}} 使得合约创建，则 $\zeta = \varnothing$；
 	若 {\hyperlink{create2}{$\op{CREATE2}$}} 使得合约创建，则 $\zeta\in \B_{256}$；
 	%\item the salt for new account's address $\zeta$,\\
@@ -61,13 +61,11 @@
 	\left(\st',g', A, z, \vec{o} \right)\eqdef \creation\left(\st, s, o, \vec{t},i, g, p, v, \vec{i}, e, \zeta,w \right)
 \end{align}
 
-由 {\hyperlink{create}{$\op{CREATE}$}} 新创建的账户 $\account$ 的地址 $a$ 由一个 $4$ 位合约类型标志，一个 Keccak 哈希值的最右 $156$ 位（即第 $100$ 至 $255$ 位）连接而成。该哈希值对一个零字节，发送方地址 $s$，账户序列号的小端字节序 $32$ 字节数组，和 \cvm 代码的 Keccak 哈希
-???
-The address $a$ of the account $\account$ newly created by {\hyperlink{create}{$\op{CREATE}$}} is defined as the $4$-bit contract type indicator concatenating the rightmost $156$ bits (i.e. the $100$-th to $255$-th bit) of the Keccak hash of a zero byte, the sender address $s$, the little-endian 32-byte array of its account nonce and the Keccak hash of \cvm code. 
+由 {\hyperlink{create}{$\op{CREATE}$}} 新创建的账户 $\account$ 的地址 $a$ 由一个 $4$ 位合约类型标志，一个 Keccak 哈希值的最右 $156$ 位（即第 $100$ 至 $255$ 位）连接而成。该值为一个零字节，发送方地址 $s$，账户序列号的小端字节序 $32$ 字节数组，和 \cvm 代码的 Keccak 哈希值连接后输入哈希函数所得的返回值。
+%The address $a$ of the account $\account$ newly created by {\hyperlink{create}{$\op{CREATE}$}} is defined as the $4$-bit contract type indicator concatenating the rightmost $156$ bits (i.e. the $100$-th to $255$-th bit) of the Keccak hash of a zero byte, the sender address $s$, the little-endian 32-byte array of its account nonce and the Keccak hash of \cvm code. 
 % 
-而由 {\hyperlink{create2}{$\op{CREATE2}$}} 新创建的账户地址稍不同于前一种，其用salt $\zeta$ 代替账户序列号，并在取 Keccak 哈希值之前改变leading字节 (following EIP-1014)
-？？？？
-For {\hyperlink{create2}{$\op{CREATE2}$}} the rule is slightly different by substituting account nonce with the salt $\zeta$ and changing the leading byte before taking Keccak (following EIP-1014).
+而由 {\hyperlink{create2}{$\op{CREATE2}$}} 新创建的账户地址稍不同于前一种，其用盐 $\zeta$ 代替账户序列号，并在取 Keccak 哈希值之前改变零字节 (根据 EIP-1014)。
+%For {\hyperlink{create2}{$\op{CREATE2}$}} the rule is slightly different by substituting account nonce with the salt $\zeta$ and changing the leading byte before taking Keccak (following EIP-1014).
 综合两种情况，新合约账号 $\account$ 的地址定义如下：
 %Combining these two cases, the resultant address for the new contract account $\account$ is defined as follows:
 \begin{align}\label{eq:new-address}
@@ -82,7 +80,7 @@ For {\hyperlink{create2}{$\op{CREATE2}$}} the rule is slightly different by subs
 其中 $\mathrm{LE}_{32}(\cdot)$ 代表一个函数，其将一个整数值扩为一个 $32$ 位小端字节序的字节数组。
 %where $\mathrm{LE}_{32}(\cdot)$ denotes the function that expands an integer value in $[0,2^{256}-1]$ to a little-endian 32-byte array. 
 %
-需注意的是，我们使用 $\st[s]_n-1$ 的原因是，它等于相应的交易或 VM 操作生成时的发送方序列号。
+需注意的是，$\st[s]_n-1$ 等于相应的交易或 VM 操作生成时的发送方序列号。
 %Note that we use $\st[s]_n-1$ since it is indeed the sender's nonce at the generation of the respective transaction or VM operation. 
 
 若 $\st[a]_c\neq \kec(\emptystring)$，系统将触发一个 \emph{合约地址冲突} 例外。此情况发生时，函数 $\creation$ 将立刻返回 $(\varnothing,g,A^0,1)$。
@@ -104,7 +102,7 @@ For {\hyperlink{create2}{$\op{CREATE2}$}} the rule is slightly different by subs
 	\end{cases}
 \end{align}
 其中，$\account^0$ 为默认账户（详见 \cref{eq:default_account}）。
-where $\account^0$ is the default account specified in~\cref{eq:default_account}. 
+%where $\account^0$ is the default account specified in~\cref{eq:default_account}. 
 
 其他未提及的账户组成部分将初始化为默认值。
 %The unmentioned components of an account are initialized by default.
@@ -115,14 +113,13 @@ where $\account^0$ is the default account specified in~\cref{eq:default_account}
 %Code execution may effect several events that are not internal to the execution state:
 账户的存储可以被改变，可以创建更多账户，进行更多消息调用。
 %the account's storage can be altered, further accounts can be created and further messages calls can be made.
-如此，代码执行函数 $\execute$ 
-？？？ evaluate to
-包含结果状态 $\st^{**}$，剩余可用燃料 $g^{**}$，累计子状态 $A$，和主体代码 $\vec{o}$ 的多元组。
-As such, the code execution function $\execute$ evaluates to a tuple of resultant state $\st^{**}$, available gas remaining $g^{**}$, the accrued substate $A$ and the body code $\vec{o}$.
+如此，代码执行函数 $\execute$ 返回一个多元组，包含着结果状态 $\st^{**}$，剩余可用燃料 $g^{**}$，累计子状态 $A$，和主体代码 $\vec{o}$。
+%As such, the code execution function $\execute$ evaluates to a tuple of resultant state $\st^{**}$, available gas remaining $g^{**}$, the accrued substate $A$ and the body code $\vec{o}$.
 \begin{align}
 	\left(\st^{**}, g^{**},  A, \vec{o} \right) \eqdef \execute\left(\st^*, g, I\right)
 \end{align}
-where $I$ consists of the parameters of the execution environment as follows:
+其中，$I$ 由以下执行环境参数组成：
+%where $I$ consists of the parameters of the execution environment as follows:
 \begin{align}
 	I_a &\eqdef a\\
 	I_o &\eqdef o\\
@@ -139,40 +136,52 @@ where $I$ consists of the parameters of the execution environment as follows:
 	I_w &\eqdef w
 \end{align}
 
-$I_{\vec{d}}$ evaluates to the empty tuple as there is no input data to this call. 
-$I_{\head}$ is the block header of the present block.
-$I_\vec{L}$ is the list of block headers ordered in front of the current block.
+$I_{\vec{d}}$ 返回一个空白多元组，
+%$I_{\vec{d}}$ evaluates to the empty tuple as there is no input data to this call. 
+$I_{\head}$ 为当前区块的区块头。
+%$I_{\head}$ is the block header of the present block.
+$I_\vec{L}$ 为先于当前区块的区块头列表
+%$I_\vec{L}$ is the list of block headers ordered in front of the current block.
 
-Code execution depletes gas, and gas may not go below zero, thus the actual execution may exit before the code has come to a natural halting state.
-In this (and several other) exceptional cases (i.e. $\st^{**}=\varnothing \land \vec{o}=\varnothing$), we say an out-of-gas (OOG) exception has occurred:
-the evaluated state is set to the empty set $\varnothing$, 
-and the entire contract creation should have no effect on the state, effectively leaving it as it was immediately prior to the attempt of the failed creation.
+代码执行消耗燃料，且燃料不能小于零。因此，实际执行可能在代码到达自然停止状态之前中止。
+%Code execution depletes gas, and gas may not go below zero, thus the actual execution may exit before the code has come to a natural halting state.
+在此（及其他几种）例外情况下（即 $\st^{**}=\varnothing \land \vec{o}=\varnothing$），系统将生成一个燃料不足（OOG）例外：
+%In this (and several other) exceptional cases (i.e. $\st^{**}=\varnothing \land \vec{o}=\varnothing$), we say an out-of-gas (OOG) exception has occurred:
+结果状态将被设为空集 $\varnothing$，且整个合约创建应该对状态没有影响，即状态仍为开始创建该失败合约前。
+%the evaluated state is set to the empty set $\varnothing$, and the entire contract creation should have no effect on the state, effectively leaving it as it was immediately prior to the attempt of the failed creation.
 %
-Function $\creation$ returns $(\varnothing,g^{**},A^0,1)$ immediately. 
+该情况下，函数 $\creation$ 立刻返回 $(\varnothing,g^{**},A^0,1)$。
+%Function $\creation$ returns $(\varnothing,g^{**},A^0,1)$ immediately. 
 
 
-If the initialization code completes successfully,
-a final storage cost is charged for depositing the code.
-The storage cost $s$ is proportional to the code size of the created contract and it consists of two parts:
+若初始化代码成功执行，系统将为存储代码收取一笔最终存储费。
+%If the initialization code completes successfully, a final storage cost is charged for depositing the code.
+存储费用 $s$ 正比于创建合约的代码大小，其由两部分组成：
+%The storage cost $s$ is proportional to the code size of the created contract and it consists of two parts:
 \begin{itemize}
-	\item the code-deposit cost $d$ charged as gas consumption:
+	\item 代码存储费 $d$ 将作为燃料消耗费收取:
+	%\item the code-deposit cost $d$ charged as gas consumption:
 	\begin{align}
 		d \eqdef   |\vec{o}| \times G_{codedeposit}
 	\end{align}
 
-	\item a substate $A^{*}$ will be generated to record the storage occupied by code size. the code size collateral will be charged in transaction post processing and will be locked during the lifetime of the created contract. (Conflux will record the owner of code in world-state and refund the collateral when the contract is destroyed):
+	\item 系统将生成一个子状态 $A^{*}$ 来记录被代码占用的存储空间大小。代码抵押将在交易后处理过程中被收取，且在所创建合约的全周期内保持锁定。（Conflux 将在世界状态内记录代码的所有者，并在合约被销毁时退还抵押）：
+	%\item a substate $A^{*}$ will be generated to record the storage occupied by code size. the code size collateral will be charged in transaction post processing and will be locked during the lifetime of the created contract. (Conflux will record the owner of code in world-state and refund the collateral when the contract is destroyed):
 	\begin{align}
 		A^{*} \eqdef   A^0 \quad\mbox{except: }A^*_{\bf p}[i]=|\vec{o}|
 	\end{align}
 \end{itemize}
 
-
-If the remaining gas cannot afford the code-deposit cost (i.e. $g^{**}<d$) or the code size exceeds 49152 bytes (i.e. $|\vec{o}|<49152$), then we also declare that an exception occurs and handle it as a failed contract creation attempt. 
+若剩余燃料不足以支付代码存储费（即 $g^{**}<d$）或代码大小超过 49152 字节（即 $|\vec{o}|<49152$），系统也将生成例外并将此次合约创建处理为一次失败的尝试。
+%If the remaining gas cannot afford the code-deposit cost (i.e. $g^{**}<d$) or the code size exceeds 49152 bytes (i.e. $|\vec{o}|<49152$), then we also declare that an exception occurs and handle it as a failed contract creation attempt. 
 %
-Function $\creation$ returns $(\varnothing,g^{**},A^0,1)$ immediately. 
+此情况下，函数 $\creation$ 立即返回 $(\varnothing,g^{**},A^0,1)$。
+%Function $\creation$ returns $(\varnothing,g^{**},A^0,1)$ immediately. 
 
-If the contract creation fails for any reason, the value of the transaction is not transferred to the aborted contract, and collateral for storing the code is not locked either.
-If the contract creation succeeds, we formally specify the resultant state, gas, storage limit, substate, and status code by $\left(\st', g', A', z\right)$ as follows:
+若合约创建因任意原因失败，交易额将不被转账至已终止的合约，代码存储抵押也将不被锁定。
+%If the contract creation fails for any reason, the value of the transaction is not transferred to the aborted contract, and collateral for storing the code is not locked either.
+若合约创建成功，我们用 $\left(\st', g', A', z\right)$  正式明确结果状态，燃料，存储上限，子状态，和状态代码：
+%If the contract creation succeeds, we formally specify the resultant state, gas, storage limit, substate, and status code by $\left(\st', g', A', z\right)$ as follows:
 \begin{align}
 	g' &\eqdef g^{**}-d \\
 	\st' &\eqdef \st^{**} \quad\mbox{except:} \\
@@ -185,13 +194,21 @@ If the contract creation succeeds, we formally specify the resultant state, gas,
 	z &\eqdef 0
 \end{align}
 
-In the determination of $\st'$, the final body code for the newly created account is specified by the byte sequence $\vec{o}$ derived from the execution of the initialization code $\vec{i}$.
-The status code $z$ is an indicator of whether the contract creation succeeds.
+当明确 $\st'$ 时，新创建账户的最终主体代码为由初始化代码 $\vec{i}$ 执行生成的字节序列 $\vec{o}$。
+%In the determination of $\st'$, the final body code for the newly created account is specified by the byte sequence $\vec{o}$ derived from the execution of the initialization code $\vec{i}$.
+而状态代码 $z$ 表示合约创建是否成功。
+%The status code $z$ is an indicator of whether the contract creation succeeds.
 
-Therefore the result of contract creation is either a successfully created new contract with its endowment and collateral for storage, or no new contract and no transfer of value or collateral at all.
+因此，合约创建的两种可能结果为：一个带有资助额和存储抵押的成功创建的新合约；或，没有新合约及任何转账。
+%Therefore the result of contract creation is either a successfully created new contract with its endowment and collateral for storage, or no new contract and no transfer of value or collateral at all.
 
-\paragraph{Subtleties.} 
-Note that while the initialization code is executing, the newly created address exists but with no intrinsic body code. 
-Thus any message call received by it during this time causes no code to be executed. 
-If the initialization execution ends with a $\op{SUICIDE}$ instruction, the matter is moot since the account will be deleted before the transaction is completed. 
-For a normal $\op{STOP}$ code, or if the code returned is otherwise empty, then the world-state may left with a zombie account. Only the administrator of such contract can destroy it by calling the internal contract described in \cref{sec:admin}.
+\paragraph{细节说明} 
+%\paragraph{Subtleties.} 
+执行初始化代码时，新创建地址存在，但没有任何主体代码。
+%Note that while the initialization code is executing, the newly created address exists but with no intrinsic body code. 
+因此，此时该地址接收的任何消息调用将不执行任何代码。
+%Thus any message call received by it during this time causes no code to be executed. 
+若初始化执行以 $\op{SUICIDE}$ 指示结束，我们将无需考虑这个问题，因为账户会在完成交易前被删除。
+%If the initialization execution ends with a $\op{SUICIDE}$ instruction, the matter is moot since the account will be deleted before the transaction is completed. 
+对于正常返回的 $\op{STOP}$ 指示，或初始化执行返回空白代码，该账户可能成为一个僵尸账户。只有此合约的管理员能够通过调用 \cref{sec:admin} 所描述的内部合约销毁该合约/账户。
+%For a normal $\op{STOP}$ code, or if the code returned is otherwise empty, then the world-state may left with a zombie account. Only the administrator of such contract can destroy it by calling the internal contract described in \cref{sec:admin}.
