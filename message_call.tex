@@ -2,28 +2,40 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Message Call}\label{sec:execution}
-The following intrinsic parameters are used when executing a message call:
+\subsection{消息调用}\label{sec:execution}
+%\subsection{Message Call}\label{sec:execution}
+当执行一个消息调用时，我们使用下列参数：
+%The following intrinsic parameters are used when executing a message call:
 \begin{itemize}[nosep]
-	\item world-state ${\st}$;
+	\item 世界状态 ${\st}$;
+	%\item world-state ${\st}$;
 	
-	\item sender $s$;
+	\item 发送方 $s$;
+	%\item sender $s$;
 
-	\item original sender $o$;
+	\item 原发送方 $o$;
+	%\item original sender $o$;
 
-	\item recipient $r$;
+	\item 接受方 $r$;
+	%\item recipient $r$;
 	
-	\item other recipients in call stack ${\bf t}$
+	\item 调用栈中其他参与方 ${\bf t}$
+	%\item other recipients in call stack ${\bf t}$
 	
-	\item storage owner $i$
+	\item 存储所有者 $i$
+	%\item storage owner $i$
 
-	\item the account $c$ whose code is to be executed, usually the same as recipient; 
+	\item 代码将被执行的账户 $c$, 通常即接收方; 
+	%\item the account $c$ whose code is to be executed, usually the same as recipient; 
 
-	\item available gas $g$;
+	\item 可用燃料 $g$;
+	%\item available gas $g$;
 
-	\item gas price $p$;
+	\item 燃料价格 $p$;
+	%\item gas price $p$;
 
-	\item value $v$;
+	\item 金额 $v$;
+	%\item value $v$;
 
 	\item input data $\vec{d}$ of the call, as an arbitrary length byte array;
 
