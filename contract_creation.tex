@@ -113,7 +113,7 @@
 %Code execution may effect several events that are not internal to the execution state:
 账户的存储可以被改变，可以创建更多账户，进行更多消息调用。
 %the account's storage can be altered, further accounts can be created and further messages calls can be made.
-如此，代码执行函数 $\execute$ 返回一个多元组，包含着结果状态 $\st^{**}$，剩余可用燃料 $g^{**}$，累计子状态 $A$，和主体代码 $\vec{o}$。
+如此，代码执行函数 $\execute$ 返回一个多元组，包含着结果状态 $\st^{**}$，剩余可用燃料 $g^{**}$，累计子状态 $A$，和代码 $\vec{o}$。
 %As such, the code execution function $\execute$ evaluates to a tuple of resultant state $\st^{**}$, available gas remaining $g^{**}$, the accrued substate $A$ and the body code $\vec{o}$.
 \begin{align}
 	\left(\st^{**}, g^{**},  A, \vec{o} \right) \eqdef \execute\left(\st^*, g, I\right)
@@ -140,7 +140,7 @@ $I_{\vec{d}}$ 返回一个空白多元组，
 %$I_{\vec{d}}$ evaluates to the empty tuple as there is no input data to this call. 
 $I_{\head}$ 为当前区块的区块头。
 %$I_{\head}$ is the block header of the present block.
-$I_\vec{L}$ 为先于当前区块的区块头列表
+$I_\vec{L}$ 为区块排序后先于当前区块的区块头列表
 %$I_\vec{L}$ is the list of block headers ordered in front of the current block.
 
 代码执行消耗燃料，且燃料不能小于零。因此，实际执行可能在代码到达自然停止状态之前中止。
@@ -165,7 +165,7 @@ $I_\vec{L}$ 为先于当前区块的区块头列表
 		d \eqdef   |\vec{o}| \times G_{codedeposit}
 	\end{align}
 
-	\item 系统将生成一个子状态 $A^{*}$ 来记录被代码占用的存储空间大小。代码抵押将在交易后处理过程中被收取，且在所创建合约的全周期内保持锁定。（Conflux 将在世界状态内记录代码的所有者，并在合约被销毁时退还抵押）：
+	\item 系统将生成一个子状态 $A^{*}$ 来记录被代码占用的存储空间大小。代码占据存储的抵押将在交易后处理过程中被收取，且在所创建合约的全周期内保持锁定。（Conflux 将在世界状态内记录代码的所有者，并在合约被销毁时退还抵押）：
 	%\item a substate $A^{*}$ will be generated to record the storage occupied by code size. the code size collateral will be charged in transaction post processing and will be locked during the lifetime of the created contract. (Conflux will record the owner of code in world-state and refund the collateral when the contract is destroyed):
 	\begin{align}
 		A^{*} \eqdef   A^0 \quad\mbox{except: }A^*_{\bf p}[i]=|\vec{o}|
@@ -194,7 +194,7 @@ $I_\vec{L}$ 为先于当前区块的区块头列表
 	z &\eqdef 0
 \end{align}
 
-当明确 $\st'$ 时，新创建账户的最终主体代码为由初始化代码 $\vec{i}$ 执行生成的字节序列 $\vec{o}$。
+当明确 $\st'$ 时，新创建账户的最终代码为由初始化代码 $\vec{i}$ 执行生成的字节序列 $\vec{o}$。
 %In the determination of $\st'$, the final body code for the newly created account is specified by the byte sequence $\vec{o}$ derived from the execution of the initialization code $\vec{i}$.
 而状态代码 $z$ 表示合约创建是否成功。
 %The status code $z$ is an indicator of whether the contract creation succeeds.
@@ -204,7 +204,7 @@ $I_\vec{L}$ 为先于当前区块的区块头列表
 
 \paragraph{细节说明} 
 %\paragraph{Subtleties.} 
-执行初始化代码时，新创建地址存在，但没有任何主体代码。
+执行初始化代码时，新创建地址存在，但没有任何代码。
 %Note that while the initialization code is executing, the newly created address exists but with no intrinsic body code. 
 因此，此时该地址接收的任何消息调用将不执行任何代码。
 %Thus any message call received by it during this time causes no code to be executed. 
