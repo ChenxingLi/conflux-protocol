@@ -2,45 +2,63 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Execution Model}
+\subsection{执行模型}
+%\subsection{Execution Model}
 \label{sec:exe model}
 
-The execution model specifies the system state transition on input of a sequence of bytecode instructions and a small tuple of environmental data. 
-The state transition function is formalized as a virtual state machine,
-which 
-% This virtual machine 
-is Turing-complete except that its running time and storage space is intrinsically bounded by the limited amount of available gas and collateral for storage.
+执行模型明确了以一系列字节码指令和一个环境数据元组为输入的系统状态转变过程。
+%The execution model specifies the system state transition on input of a sequence of bytecode instructions and a small tuple of environmental data. 
+我们按照虚拟状态机的体系构建了该状态转变函数。除了持续时间和存储空间在本质上受到有限可用燃料和存储抵押的限制，该函数具备图灵完整性。
+%The state transition function is formalized as a virtual state machine, which is Turing-complete except that its running time and storage space is intrinsically bounded by the limited amount of available gas and collateral for storage.
 % 
-For this moment we implement the well-known Ethereum Virtual Machine (EVM), and the execution model follows \cite{ETH_yellow}.
+当前我们使用著名的以太坊虚拟机（EVM),而执行模型遵循 \cite{ETH_yellow}。
+%For this moment we implement the well-known Ethereum Virtual Machine (EVM), and the execution model follows \cite{ETH_yellow}.
 
 
-\subsubsection{Basics}
+\subsubsection{基础}
+%\subsubsection{Basics}
 
-The \cvm is a stack-based architecture with $256$-bit word size.
-The stack has a maximum size of $1024$ words.
-The memory model is a simple word-addressed byte array.  
-The machine also has an independent storage model which is a word-addressable word array (rather than byte array for the memory). 
-The memory is volatile and storage is steady and maintained as part of the system state. 
-All locations in both memory and storage are initialized as zero.
-The program code is stored separately in a virtual ROM that is only interactable via specific instructions.
+\cvm 是一个基于栈的 $256$ 位字长的结构。
+%The \cvm is a stack-based architecture with $256$-bit word size.
+栈的最大值为 $1024$ 字节。
+%The stack has a maximum size of $1024$ words.
+内存模型是一个简单的
+？？？
+字节序列。
+%The memory model is a simple word-addressed byte array.
+该虚拟机同时有着一个独立存储模型，该模型为一个word-addressable字节序列（而非一个内存的字节序列）。
+%The machine also has an independent storage model which is a word-addressable word array (rather than byte array for the memory).
+内存是短暂（非永久）的，而存储是稳定且保持为系统状态的一部分。
+%The memory is volatile and storage is steady and maintained as part of the system state. 
+内存和存储内的所有位置皆初始化为零。
+%All locations in both memory and storage are initialized as zero.
+而程序代码被分开存储在仅可通过特殊指令交互的虚拟 ROM 中。
+%The program code is stored separately in a virtual ROM that is only interactable via specific instructions.
 
-The execution of the virtual machine may reach exceptions for various reasons, including stack underflows/overflow, invalid instruction, invalid jump destination, out-of-gas and so on.
-Like the out-of-gas exception, the machine halts immediately and throws an exception to the execution agent, either the transaction processor or recursively the spawning execution environment, which will catch and deal with it separately. 
+虚拟机的执行可能因各种原因生成例外，包括堆栈下溢/上溢，无效指令，无效跳转目标，燃料耗尽等等。
+%The execution of the virtual machine may reach exceptions for various reasons, including stack underflows/overflow, invalid instruction, invalid jump destination, out-of-gas and so on.
+与燃料耗尽例外类似，此类情况下虚拟机将立刻停止并向执行代理发出例外；执行代理，即交易处理器或递归地执行环境，将接收并另外处理该例外。
+%Like the out-of-gas exception, the machine halts immediately and throws an exception to the execution agent, either the transaction processor or recursively the spawning execution environment, which will catch and deal with it separately. 
 
 
 
-\subsubsection{Gas Consumption}
+\subsubsection{燃料消耗}
+%\subsubsection{Gas Consumption}
 
-The cost of execution, aka. \emph{gas}, is charged under following circumstances:
+执行费用，即  \emph{燃料}，将在以下情况中被收取：
+%The cost of execution, aka. \emph{gas}, is charged under following circumstances:
 \begin{enumerate}[nosep]
-	\item the execution of instructions, where each type of instructions is assigned an intrinsic amount of gas;
+	\item 执行指令，每个指令类型对应一个固定燃料值；
+	%\item the execution of instructions, where each type of instructions is assigned an intrinsic amount of gas;
 
-	\item the generation of subordinate message call or contract creation.
+	\item 生成下一级的消息调用或合约创建。
+	%\item the generation of subordinate message call or contract creation.
 
 \end{enumerate}
 
 
-\subsubsection{Storage Consumption}
+\subsubsection{存储消耗}
+%\subsubsection{Storage Consumption}
 	\label{subsec:storage consumption}
 
 	\name requires a fixed amount of fund, i.e. \sunitprice, locked as collateral during the whole lifetime of each \sunitsize storage entry in the world-state.
