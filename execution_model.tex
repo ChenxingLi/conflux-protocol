@@ -22,11 +22,9 @@
 %The \cvm is a stack-based architecture with $256$-bit word size.
 栈的最大值为 $1024$ 字节。
 %The stack has a maximum size of $1024$ words.
-内存模型是一个简单的
-？？？
-字节序列。
+内存模型是一个简单的按字寻址的字节序列。
 %The memory model is a simple word-addressed byte array.
-该虚拟机同时有着一个独立存储模型，该模型为一个word-addressable字节序列（而非一个内存的字节序列）。
+该虚拟机同时有着一个独立存储模型，该模型为一个按字寻址的字序列（而非内存的字节序列）。
 %The machine also has an independent storage model which is a word-addressable word array (rather than byte array for the memory).
 内存是短暂（非永久）的，而存储是稳定且保持为系统状态的一部分。
 %The memory is volatile and storage is steady and maintained as part of the system state. 
@@ -37,7 +35,7 @@
 
 虚拟机的执行可能因各种原因生成例外，包括堆栈下溢/上溢，无效指令，无效跳转目标，燃料耗尽等等。
 %The execution of the virtual machine may reach exceptions for various reasons, including stack underflows/overflow, invalid instruction, invalid jump destination, out-of-gas and so on.
-与燃料耗尽例外类似，此类情况下虚拟机将立刻停止并向执行代理发出例外；执行代理，即交易处理器或递归地执行环境，将接收并另外处理该例外。
+与燃料耗尽例外类似，此类情况下虚拟机将立刻停止并向执行代理发出例外；无论是在交易执行过程，还是调用产生的执行子过程中，每个过程将独自处理异常，不会将异常传给其他过程。
 %Like the out-of-gas exception, the machine halts immediately and throws an exception to the execution agent, either the transaction processor or recursively the spawning execution environment, which will catch and deal with it separately. 
 
 
